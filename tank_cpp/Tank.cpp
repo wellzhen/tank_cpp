@@ -1,10 +1,10 @@
 #include "Tank.h"
 
-CTank::CTank(CMaps * pMaps)
-{
-	m_pMaps = pMaps;
-	__initTankShapeModel();
 
+CTank::CTank(CMaps* pMaps)
+{
+	__initTankShapeModel();
+	m_pMaps = pMaps;
 }
 
 CTank::~CTank()
@@ -45,6 +45,7 @@ void CTank::__initTankShapeModel()
 	}
 }
 
+
 void CTank::initNpcTank()
 {
 	for (int nNum = 0; nNum < 1; nNum++) {
@@ -72,14 +73,14 @@ void CTank::initNpcTank()
 	}
 }
 
-void CTank::autoRunNpcTank()
+void CTank::autoRunNpcTank(CBullet& bullets)
 {
 	srand((unsigned int)time(NULL));
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
 			int nDir = rand() % 4;
 			moveTank(nDir, index); //移动
-			shootBullet(index); //射击
+			bullets.shootBullet(m_vecTank, index); //射击
 		}
 	}
 }
@@ -109,7 +110,7 @@ void CTank::initTank()
 }
 
 //此函数同步m_pMaps->m_pTankMap数据
-void CTank::drawTank(int index, bool isShow)
+void CTank::drawTank( int index, bool isShow)
 {
 	int posX = m_vecTank[index]->posX;
 	int posY = m_vecTank[index]->posY;

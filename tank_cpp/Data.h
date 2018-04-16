@@ -26,7 +26,6 @@ typedef struct _POS {
 	int posY;
 } POS;
 
-
 //ÅÚµ¯
 typedef struct _BULLET {
 	int posX;

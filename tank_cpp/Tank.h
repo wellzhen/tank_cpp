@@ -1,10 +1,11 @@
 #pragma once
 #include "Data.h"
 #include "Maps.h"
+#include "Bullet.h"
 class CTank
 {
 public:
-	CTank(CMaps * pMaps);
+	CTank(CMaps* pMaps);
 	~CTank();
 public:
 	//初始化Npc坦克
@@ -13,7 +14,7 @@ public:
 	//初始化玩家坦克
 	void initTank();
 	//自动运行Npc坦克
-	void autoRunNpcTank();
+	void autoRunNpcTank(CBullet& bullets);
 
 	//显示坦克 true|| false
 	void drawTank(int index, bool isShow);
@@ -25,7 +26,7 @@ public:
 	void judgeAlive();
 private:
 	void __initTankShapeModel();
-private:
+public:
 	vector<TANK *>  m_vecTank;
 	int m_tankShape[4][3][3]; // TankShape[4][3][3]
 	CMaps * m_pMaps;

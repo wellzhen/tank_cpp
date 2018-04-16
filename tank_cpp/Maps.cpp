@@ -28,6 +28,7 @@ void CMaps::initOuterWall()
 void CMaps::initMapData()
 {
 	initOuterWall();
+	return; //-----------------------------test---------//
 	for (int col = 1; col < MAPWIDTH - 1; col++) {
 		m_nMap[4][col] = MAP_GRASS;
 		m_nMap[5][col] = MAP_GRASS;
@@ -77,7 +78,6 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 20, "    双击删除", COLOR_GRAY);
 	printChar(nDestPosX, 22, "    右键游戏", COLOR_GRAY);
 }
-
 
 void CMaps::customMapData()
 {
@@ -162,6 +162,7 @@ void CMaps::customMapData()
 //参数（ posY,posX）
 void CMaps::reDrawMapPoint(int row, int col)
 {
+	
 	if (m_nMap[row][col] == MAP_STONE) {
 		printChar(col, row, "■", COLOR_GRAY);
 	}
@@ -215,7 +216,7 @@ void CMaps::recoverDamagedPlant()
 
 }
 
-void CMaps::printChar(int posX, int posY, char* pszChar, WORD wArr)
+void  CMaps::printChar(int posX, int posY, char* pszChar, WORD wArr)
 {
 	//1 设置光标属性
 	CONSOLE_CURSOR_INFO cci;
