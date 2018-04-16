@@ -1,9 +1,10 @@
 #pragma once
 #include "Data.h"
+#include "Maps.h"
 class CTank
 {
 public:
-	CTank();
+	CTank(CMaps * pMaps);
 	~CTank();
 public:
 	//初始化Npc坦克
@@ -23,6 +24,10 @@ public:
 	//判断血值和存活： 所有的坦克
 	void judgeAlive();
 private:
+	void __initTankShapeModel();
+private:
 	vector<TANK *>  m_vecTank;
+	int m_tankShape[4][3][3]; // TankShape[4][3][3]
+	CMaps * m_pMaps;
 };
 
