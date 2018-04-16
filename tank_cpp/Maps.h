@@ -29,6 +29,6 @@ private:
 	int m_nMap[MAPHEIGHT][MAPWIDTH];
 	TANK * m_pTankMap[MAPHEIGHT][MAPWIDTH];
 	BULLET *  m_pBulletMap[MAPHEIGHT][MAPWIDTH];
-	vector<POS> g_vecDamagedPlant;
+	vector<POS> m_vecDamagedPlant;
 };
 
