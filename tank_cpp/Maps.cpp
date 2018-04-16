@@ -74,9 +74,10 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 12, "¡ü Ê÷Ä¾", COLOR_GREEN_LIGHT); //Ê÷
 	printChar(nDestPosX, 14, "¡Ö ºÓÁ÷", COLOR_GRAY);   //ºÓÁ÷
 
-	printChar(nDestPosX, 18, "Tip ×ó¼ü±à¼­", COLOR_GRAY);
-	printChar(nDestPosX, 20, "    Ë«»÷É¾³ý", COLOR_GRAY);
-	printChar(nDestPosX, 22, "    ÓÒ¼üÓÎÏ·", COLOR_GRAY);
+
+	printChar(nDestPosX, 20, "Tip ×ó¼ü±à¼­", COLOR_GRAY);
+	printChar(nDestPosX, 22, "    Ë«»÷É¾³ý", COLOR_GRAY);
+	printChar(nDestPosX, 24, "    ÓÒ¼üÓÎÏ·", COLOR_GRAY);
 }
 
 void CMaps::customMapData()
@@ -93,6 +94,8 @@ void CMaps::customMapData()
 	DWORD dwRead;
 	SetConsoleMode(hStdin, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
 
+
+	bool activeScrollPainting = false;
 	while (1)
 	{
 		ReadConsoleInput(hStdin, &stcRecord, 1, &dwRead);
@@ -100,9 +103,9 @@ void CMaps::customMapData()
 			MOUSE_EVENT_RECORD mer = stcRecord.Event.MouseEvent;
 			switch (mer.dwEventFlags)
 			{
-			case 0:
+			case 0://×ó¼üµ¥»÷
 				if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) {
-					//×ó¼üµ¥»÷
+					
 					if (mousePosX >= nColorBoxPosX) { //µã»÷ÁËÑÕÁÏÇøÓò
 						switch (mousePosY) {
 						case 2:
@@ -132,7 +135,13 @@ void CMaps::customMapData()
 						}
 					}
 					else if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
-						m_nMap[mousePosY][mousePosX] = nBrushColorNum;
+						//ÄÚÈÝÇøµ¥»÷
+						if (nBrushColorNum == m_nMap[mousePosY][mousePosX]) { //È¡Ïû
+							m_nMap[mousePosY][mousePosX] = 0;
+						}
+						else {
+							m_nMap[mousePosY][mousePosX] = nBrushColorNum;
+						}
 						reDrawMapPoint(mousePosY, mousePosX);
 					}
 				}
@@ -143,18 +152,48 @@ void CMaps::customMapData()
 				}
 				break;
 			case DOUBLE_CLICK:
-				//Ë«»÷ 
+				//ÄÚÈÝÇøË«»÷ 
 				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
-					m_nMap[mousePosY][mousePosX] = 0;
+					m_nMap[mousePosY][mousePosX] = nBrushColorNum;
 					reDrawMapPoint(mousePosY, mousePosX);
-				}
+					//¼¤»î»òÕßÈ¡Ïû»¬¶¯»æÍ¼
+					activeScrollPainting = !activeScrollPainting;
+ 				}
 				break;
 			case MOUSE_MOVED:
 				mousePosX = mer.dwMousePosition.X / 2;
 				mousePosY = mer.dwMousePosition.Y;
+				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
+					//ÄÚÈÝÇø
+					if (activeScrollPainting) { // »¬¶¯»æÍ¼
+						m_nMap[mousePosY][mousePosX] = nBrushColorNum;
+						reDrawMapPoint(mousePosY, mousePosX);
+					}
+				}
+
 				break;
 			}
 		}
+
+		//ÍâÇ½±äÉ«£¬±íÃ÷¼¤»îÁË»¬¶¯»æÍ¼
+		for (int row = 0; row < MAPHEIGHT; row++) {
+			for (int col = 0; col < MAPWIDTH; col++) {
+				if (row == 0 || row == MAPHEIGHT - 1 || col == 0 || col == MAPWIDTH - 1) {
+					if (activeScrollPainting) {
+						CMaps::printChar(col, row, "¡ö", COLOR_YELLOW);
+						printChar(MAPWIDTH + 2, MAPHEIGHT, "»¬¶¯»æÍ¼ÒÑ¿ªÆô", COLOR_YELLOW);
+						printChar(MAPWIDTH + 2, MAPHEIGHT +1, "Ë«»÷¹Ø±Õ", COLOR_YELLOW);
+					}
+					else {
+						CMaps::printChar(col, row, "¡ö", COLOR_GRAY);
+						printChar(MAPWIDTH + 2, MAPHEIGHT, "             ", COLOR_GRAY);
+						printChar(MAPWIDTH + 2, MAPHEIGHT + 1, "          ", COLOR_GRAY);
+					}
+					
+				}
+			}
+		}
+
 	}
 
 }

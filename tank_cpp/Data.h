@@ -85,3 +85,5 @@ typedef struct _TANK {
 #define	COLOR_GREEN_LIGHT   2
 #define	COLOR_WHITE   15
 #define	COLOR_GRAY   8  //»ÒÉ«
+
+// ¡î ¡ô¡ç  ¡ï¡ô

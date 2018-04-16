@@ -33,7 +33,7 @@ void CCtrl::playTank(int gameType)
 		//初始化玩家坦克,并显示:
 		tanks.initPlayerTank(playerCount);
 		//初始化NPC坦克， 并显示
-		tanks.initNpcTank(1);
+		tanks.initNpcTank(2);
 	}
 	else if (gameType == 2) {//自定义地图
 		maps.showNeedStaticObj();

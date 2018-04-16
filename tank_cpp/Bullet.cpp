@@ -18,6 +18,7 @@ void CBullet::drawBullet(bool isShow)
 	int posX;
 	int posY;
 	int color;
+
 	for (unsigned int i = 0; i < m_vecBullet.size(); i++)
 	{
 		if (!m_vecBullet[i]->isValid) {
@@ -32,16 +33,18 @@ void CBullet::drawBullet(bool isShow)
 		else if (isShow) {
 			if ((m_pMaps->m_nMap[posY][posX] == MAP_GRASS) || (m_pMaps->m_nMap[posY][posX] == MAP_ICE) || (m_pMaps->m_nMap[posY][posX] == MAP_RIVER)) {
 				//显示子弹（经过后擦除子弹位置，植物被破坏， 但是要恢复被破坏的植物）
-				m_pMaps->m_vecDamagedPlant.push_back({ posX, posY }); //同步地图
+				m_pMaps->m_vecDamagedPlant.push_back({ posX, posY }); //同步受损植物
 			}
 			m_pMaps->printChar(posX, posY, "⊙", color);
 		}
 		else {
 			if ((m_pMaps->m_nMap[posY][posX] == MAP_GRASS) || (m_pMaps->m_nMap[posY][posX] == MAP_ICE) || (m_pMaps->m_nMap[posY][posX] == MAP_RIVER)) {//擦除位置有植物
-				m_pMaps->m_vecDamagedPlant.push_back({ posX, posY });  //同步地图
+				m_pMaps->m_vecDamagedPlant.push_back({ posX, posY });  //同步受损植物
 			}
 			m_pMaps->printChar(posX, posY, "  ", color);
 		}
+
+
 	}
 }
 
@@ -73,7 +76,8 @@ void CBullet::removeInvalidBullet()
 			m_vecBullet[i]->isValid = false;
 			m_pMaps->m_pBulletMap[posY][posX] = NULL;
 			continue;
-		}// 开始静态地图检测
+		} 
+		// 开始静态地图检测
 		else if (m_pMaps->m_nMap[posY][posX] == MAP_STONE) { //stone: 子弹失效
 			m_vecBullet[i]->isValid = false;
 			m_pMaps->m_pBulletMap[posY][posX] = NULL;
@@ -113,6 +117,23 @@ void CBullet::removeInvalidBullet()
 			break;
 		}
 	}
+
+	//更新子弹地图
+	for (int i = 0; i < MAPHEIGHT; i++) {
+		for (int j = 0; j < MAPWIDTH; j++) {
+			m_pMaps->m_pBulletMap[i][j] = NULL;
+		}
+	}
+	for (unsigned int i = 0; i < m_vecBullet.size(); i++)
+	{
+		if (!m_vecBullet[i]->isValid) {
+			continue;
+		}
+		posX = m_vecBullet[i]->posX;
+		posY = m_vecBullet[i]->posY;
+		m_pMaps->m_pBulletMap[posY][posX] = m_vecBullet[i];
+	}
+
 
 }
 
@@ -157,6 +178,11 @@ bool CBullet::runBullet()
 		}
 		m_vecBullet[i]->posX = posX;
 		m_vecBullet[i]->posY = posY;
+		//判断前进后是否将碰到子弹, 不能在removeInvalidBullet中检测；
+		if (m_pMaps->m_pBulletMap[posY][posX]) { // 子弹 -- 子弹检测 : 两枚子弹都失效
+			m_vecBullet[i]->isValid = false;
+			m_pMaps->m_pBulletMap[posY][posX]->isValid = false;
+		}
 	}
 	//移除无效子弹
 	removeInvalidBullet();
@@ -176,6 +202,9 @@ void CBullet::shootBullet(vector<TANK *>& m_vecTank, int nTankIndex)
 		return;
 	}
 	else if (!m_vecTank[nTankIndex]->isNPC && end_time - start_time < 50) {
+		return;
+	}
+	else if (!m_vecTank[nTankIndex]->isAlive) {
 		return;
 	}
 	m_vecTank[nTankIndex]->last_shoot_time = end_time;
