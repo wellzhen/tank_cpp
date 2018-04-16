@@ -19,9 +19,6 @@ int main()
 
 	while (1) {
 		/*菜单 选项*/
-		system("cls");
-		ctrl.showWelcomeWall();
-		ctrl.showMenu();
 		int optionNum = ctrl.getMenuChoice();
 
 		switch (optionNum) {
@@ -36,6 +33,9 @@ int main()
 			break;
 		case 4:
 			return 0; //退出
+		default:
+			return 0;
+
 		}
 	}
 

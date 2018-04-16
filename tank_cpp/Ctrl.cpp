@@ -12,29 +12,28 @@ CCtrl::~CCtrl()
 
 void CCtrl::playTank(int gameType)
 {
-	//玩家数量
-	system("cls");
-	showPlayerCountMenu();
-	int playerCount = getPlayerCount();
-
+	int playerCount = 0;
+	if (gameType != 3) { //非读档
+		playerCount = getPlayerCount();//显示UI，获取玩家数量
+	}
+	if (gameType != 3 && playerCount == 0){ //debug
+		printf("玩家数量错误---\n");
+		Sleep(5000);
+	}
 	//开始布置游戏数据
 	system("cls");
 	CMaps maps;
 	CTank tanks(&maps);
 	CBullet bullets(&maps);
-	//清理全局数据（push_back的数据）
-	clearGlobalData(maps, tanks, bullets);
-	
-
+	//清理全局数据（push_back的数据）-- need ?
+	//clearGlobalData(maps, tanks, bullets);
 	if (gameType == 1) { //经典游戏
 		maps.initMapData();
 		maps.drawMap();
-		//初始化玩家坦克: 默认一个
-		tanks.initTank();
-		tanks.drawTank(0, true);
-		//初始化NPC坦克
-		tanks.initNpcTank();
-		tanks.drawTank(1, true); // delete? 或者删除初始化中的drawTank
+		//初始化玩家坦克,并显示:
+		tanks.initPlayerTank(playerCount);
+		//初始化NPC坦克， 并显示
+		tanks.initNpcTank(1);
 	}
 	else if (gameType == 2) {//自定义地图
 		maps.showNeedStaticObj();
@@ -42,17 +41,16 @@ void CCtrl::playTank(int gameType)
 		maps.drawMap();
 		maps.customMapData();
 
-		//初始化玩家坦克: 默认一个
-		tanks.initTank();
+		//初始化玩家坦克
+		tanks.initPlayerTank(playerCount);
 		tanks.drawTank(0, true);
 		//初始化NPC坦克
-		tanks.initNpcTank();
+		tanks.initNpcTank(4);
 		tanks.drawTank(1, true);
 	}
 	else if (gameType == 3) {//读档
 		readArchive(maps, tanks, bullets);
 		maps.drawMap();
-
 		//重新画一遍玩家坦克： 会自动更新g_pTankMap
 		for (unsigned int i = 0; i < tanks.m_vecTank.size(); i++) {
 			if ((!tanks.m_vecTank[i]->isNPC) && tanks.m_vecTank[i]->isAlive) {
@@ -61,8 +59,7 @@ void CCtrl::playTank(int gameType)
 		}
 	}
 
-
-	//控制坦克
+	/*********************操作坦克*******************/
 	char chKey;
 	int  nDirNum;
 	bool hasPause = false;
@@ -80,12 +77,19 @@ void CCtrl::playTank(int gameType)
 			else if (hasPause) {
 				continue;
 			}
-			else if (chKey == 'j') {//发射炮弹
+			else if (chKey == 'f') {//发射炮弹
 				bullets.shootBullet(tanks.m_vecTank, 0);//index = 0
+			}
+			else if (chKey == 'h' && playerCount == 2) {//第二玩家
+				bullets.shootBullet(tanks.m_vecTank, 1);
 			}
 			else if (chKey == 'w' || chKey == 'a' || chKey == 's' || chKey == 'd') { //移动按键
 				nDirNum = dirKey2DirNum(chKey);
 				tanks.moveTank(nDirNum, 0);//暂时第一辆坦克
+			}
+			else if (playerCount == 2 &&( chKey == 'j' || chKey == 'k' || chKey == 'i' || chKey == 'l')) { //移动按键
+				nDirNum = dirKey2DirNum(chKey);
+				tanks.moveTank(nDirNum, 1);//暂时第2辆坦克
 			}
 			else {
 				printf("非控制键： %c %d %d\n", chKey, chKey, (int)chKey);
@@ -95,8 +99,6 @@ void CCtrl::playTank(int gameType)
 			continue;
 		}
 
-
-
 		//Npc坦克自动运行
 		tanks.autoRunNpcTank(bullets);
 		//子弹前进
@@ -104,8 +106,6 @@ void CCtrl::playTank(int gameType)
 		//判断坦克生存情况
 		tanks.judgeAlive();
 		maps.recoverDamagedPlant();
-
-
 	}
 
 }
@@ -113,12 +113,10 @@ void CCtrl::playTank(int gameType)
 void CCtrl::showPlayerCountMenu()
 {
 
-	char menu[][30] = { "1  单人游戏  ",
-		"2  双人游戏"
+	char menu[][30] = { "1  单人游戏  ", 
+						"2  双人游戏  " 
 	};
-
 	char tips[] = "请输入您的选择 \n";
-
 	for (int i = 0; i< _countof(menu); i++) {
 		CMaps::printChar((MAPWIDTH - 2 - strlen(menu[i])) / 2, MAPHEIGHT / 2 - 6 + i * 2, menu[i], COLOR_WHITE);
 	}
@@ -128,16 +126,15 @@ void CCtrl::showPlayerCountMenu()
 
 int CCtrl::getPlayerCount()
 {
-	int menuNum = 0;
-	while (1) {
-		if (menuNum == 1 || menuNum == 2) {
-			return menuNum;
-		}
-		else {
-			//menuNum = 0;
-			scanf_s("%d", &menuNum);
-		}
+	int playerCount = 0;
+	while (playerCount != 1 && playerCount != 2) {
+		system("cls");
+		showPlayerCountMenu();
+		scanf_s("%d", &playerCount);
 	}
+
+	return playerCount;
+
 }
 
 void CCtrl::initConsoleWindow()
@@ -155,19 +152,23 @@ int CCtrl::dirKey2DirNum(char keyWord)
 {
 	switch (keyWord) {
 	case 'w':
+	case 'i':
 		return DIR_UP;
 		break;
 	case 'a':
+	case 'j':
 		return DIR_LEFT;
 		break;
 	case 's':
+	case 'k':
 		return DIR_DOWN;
 		break;
 	case 'd':
+	case 'l':
 		return DIR_RIGHT;
 		break;
 	default:
-		printf("尚未设置的按键映射： dirkey2DirNum\n");
+		printf("debug: 暂无功能的按键： dirkey2DirNum\n");
 		return -1;
 		break;
 	}
@@ -212,15 +213,16 @@ void CCtrl::showMenu()
 int CCtrl::getMenuChoice()
 {
 	int menuNum = 0;
-	while (1) {
-		if (menuNum == 1 || menuNum == 2 || menuNum == 3 || menuNum == 4 || menuNum == 5 || menuNum == 6) {
-			return menuNum;
-		}
-		else {
-			//menuNum = 0;
-			scanf_s("%d", &menuNum);
-		}
+	while (menuNum != 1 && menuNum != 2 && menuNum != 3 && menuNum != 4) {
+		system("cls");
+		showWelcomeWall();
+		showMenu();
+		scanf_s("%d", &menuNum);
+		int ch;
+		while ((ch = getchar()) != EOF && ch != '\n');
 	}
+	
+	return menuNum;
 }
 
 void CCtrl::saveArchive(CMaps& maps, CTank& tanks, CBullet& bullets)

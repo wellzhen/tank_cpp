@@ -46,13 +46,13 @@ void CTank::__initTankShapeModel()
 }
 
 
-void CTank::initNpcTank()
+void CTank::initNpcTank(int Count)
 {
-	for (int nNum = 0; nNum < 1; nNum++) {
+	for (int nNum = 0; nNum < Count; nNum++) {
 		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
 		pTank->isNPC = true;
-		pTank->posX = 3 + nNum * 3;
-		pTank->posY = 6;
+		pTank->posX = 2 + nNum * 3;
+		pTank->posY = 2;
 		pTank->color = COLOR_RED;
 		pTank->dir = DIR_DOWN;
 		pTank->maxHP = 100;
@@ -85,28 +85,34 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	}
 }
 
-void CTank::initTank()
+void CTank::initPlayerTank(int Count)
 {
-	TANK*  pTank = (TANK*)malloc(sizeof(TANK));
-	pTank->isNPC = false;
-	pTank->posX = MAPWIDTH / 2 - 4;
-	pTank->posY = MAPHEIGHT - 3;
-	pTank->color = COLOR_BLUE;
-	pTank->dir = DIR_UP;
-	pTank->maxHP = 100;
-	pTank->curHP = 100;
-	pTank->maxSpeed = 60;
-	pTank->curSpeed = 50;
-	pTank->oldSpeed = 0;
-	pTank->nKill = 0;
-	pTank->nDie = 0;
-	pTank->nlife = 30;
-	pTank->nlevel = 1;
-	pTank->last_move_time = 0;
-	pTank->last_shoot_time = 0;
-	pTank->isAlive = true;
+	for (int i = 0; i < Count; i++) {
+		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
+		pTank->isNPC = false;
+		pTank->posX = MAPWIDTH / 2 - 4 + 8* i;
+		pTank->posY = MAPHEIGHT - 3;
+		pTank->color = COLOR_BLUE;
+		pTank->dir = DIR_UP;
+		pTank->maxHP = 100;
+		pTank->curHP = 100;
+		pTank->maxSpeed = 60;
+		pTank->curSpeed = 50;
+		pTank->oldSpeed = 0;
+		pTank->nKill = 0;
+		pTank->nDie = 0;
+		pTank->nlife = 30;
+		pTank->nlevel = 1;
+		pTank->last_move_time = 0;
+		pTank->last_shoot_time = 0;
+		pTank->isAlive = true;
 
-	m_vecTank.push_back(pTank);
+		m_vecTank.push_back(pTank);
+		drawTank(m_vecTank.size() - 1, true);
+	}
+	
+
+	
 }
 
 //此函数同步m_pMaps->m_pTankMap数据

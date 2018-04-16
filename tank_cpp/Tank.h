@@ -9,10 +9,10 @@ public:
 	~CTank();
 public:
 	//初始化Npc坦克
-	void initNpcTank();
+	void initNpcTank(int count);
 
 	//初始化玩家坦克
-	void initTank();
+	void initPlayerTank(int count);
 	//自动运行Npc坦克
 	void autoRunNpcTank(CBullet& bullets);
 
