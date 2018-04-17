@@ -18,12 +18,12 @@ public:
 
 	//显示坦克 true|| false
 	void drawTank(int index, bool isShow);
-
+	void initDrawAllTank(bool isShow);
 	//移动坦克, 包含显示和隐藏
 	bool moveTank(int nDir, int index);
 
 	//判断血值和存活： 所有的坦克
-	void judgeAlive();
+	int judgeAlive();
 private:
 	void __initTankShapeModel();
 public:

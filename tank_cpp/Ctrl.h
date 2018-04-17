@@ -1,4 +1,5 @@
 #pragma once
+#include <sstream>
 #include "Data.h"
 #include "Maps.h"
 #include "Tank.h"
@@ -28,12 +29,14 @@ public:
 	void  showWelcomeWords();
 	//显示主页菜单
 	void showMenu();
-	//获取用户的菜单选项
+	//获取用户的游戏主菜单选项
 	int getMenuChoice();
 	//显示选择玩家数量菜单
 	void showPlayerCountMenu();
 	//获取用户的玩家数量
 	int getPlayerCount();
+	//显示并获取现有的关卡菜单
+	int chooseLevelPassMenu();
 	//存档
 	void saveArchive(CMaps& maps, CTank& tanks, CBullet& bullets);
 	//读档

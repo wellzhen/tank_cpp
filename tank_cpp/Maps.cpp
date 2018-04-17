@@ -5,6 +5,7 @@ CMaps::CMaps()
 	int m_nMap[MAPHEIGHT][MAPWIDTH] = { 0 };
 	TANK * m_pTankMap[MAPHEIGHT][MAPWIDTH] = { NULL };
 	BULLET *  m_pBulletMap[MAPHEIGHT][MAPWIDTH] = { NULL };
+	m_isHeartBroken = false;
 }
 
 CMaps::~CMaps()
@@ -23,12 +24,29 @@ void CMaps::initOuterWall()
 			}
 		}
 	}
+	
 }
 
-void CMaps::initMapData()
+void CMaps::initHeart()
+{
+	int Y = MAPHEIGHT - 3;
+	int X = MAPWIDTH / 2 - 1;
+	m_nMap[Y][X] = MAP_HEART;
+	//保护墙
+	m_nMap[Y+1][X + 1] = MAP_BRICK;
+	m_nMap[Y +1][X - 1] = MAP_BRICK;
+	m_nMap[Y][X + 1] = MAP_BRICK;
+	m_nMap[Y][X - 1] = MAP_BRICK;
+	m_nMap[Y - 1][X] = MAP_BRICK;
+	m_nMap[Y - 1][X + 1] = MAP_BRICK;
+	m_nMap[Y - 1][X - 1] = MAP_BRICK;
+
+}
+
+void CMaps::initStaticMapData()
 {
 	initOuterWall();
-	return; //-----------------------------test---------//
+	initHeart();
 	for (int col = 1; col < MAPWIDTH - 1; col++) {
 		m_nMap[4][col] = MAP_GRASS;
 		m_nMap[5][col] = MAP_GRASS;
@@ -57,15 +75,15 @@ void CMaps::initMapData()
 	for (int row = 20; row < 30; row++) {
 		for (int col = 1; col < MAPWIDTH - 1; col++) {
 			m_nMap[row][col] = MAP_BRICK;
-
 		}
 	}
-
 }
 
 void CMaps::showNeedStaticObj()
 {
 	int nDestPosX = MAPWIDTH + 2;
+	printChar(nDestPosX, 0, "【  返回菜单  】", COLOR_RED); //空地
+
 	printChar(nDestPosX, 2, "□ 空地", COLOR_WHITE); //空地
 	printChar(nDestPosX, 4, "■ 石块", COLOR_GRAY);  //石块
 	printChar(nDestPosX, 6, "■ 砖块", COLOR_RED_LIGHT); // 砖块
@@ -75,9 +93,17 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 14, "≈ 河流", COLOR_GRAY);   //河流
 
 
-	printChar(nDestPosX, 20, "Tip 左键编辑", COLOR_GRAY);
-	printChar(nDestPosX, 22, "    双击删除", COLOR_GRAY);
-	printChar(nDestPosX, 24, "    右键游戏", COLOR_GRAY);
+	printChar(nDestPosX, 28, "【选择导入如下关卡：】", COLOR_GRAY);
+	printChar(nDestPosX + 3, 29, "←", COLOR_GRAY); printChar(nDestPosX + 4, 29, " ", COLOR_GRAY); printChar(nDestPosX + 5, 29, "→", COLOR_GRAY);
+
+	printChar(nDestPosX, 30, "【保存为关卡地图:自动追加】", COLOR_GRAY);
+	printChar(nDestPosX , 31, "【强制保存为如下关卡：】", COLOR_GRAY);
+	printChar(nDestPosX+3, 32, "←", COLOR_GRAY); printChar(nDestPosX + 4, 32, " ", COLOR_GRAY); printChar(nDestPosX + 5, 32, "→", COLOR_GRAY);
+	
+
+	printChar(nDestPosX, MAPHEIGHT - 3, "Tip 左键编辑", COLOR_GRAY);
+	printChar(nDestPosX, MAPHEIGHT - 2, "    双击删除", COLOR_GRAY);
+	printChar(nDestPosX, MAPHEIGHT - 1, "    右键游戏", COLOR_GRAY);
 }
 
 void CMaps::customMapData()
@@ -96,6 +122,7 @@ void CMaps::customMapData()
 
 
 	bool activeScrollPainting = false;
+	int nLevelPass = 1;//强制要保存的关卡号
 	while (1)
 	{
 		ReadConsoleInput(hStdin, &stcRecord, 1, &dwRead);
@@ -103,11 +130,13 @@ void CMaps::customMapData()
 			MOUSE_EVENT_RECORD mer = stcRecord.Event.MouseEvent;
 			switch (mer.dwEventFlags)
 			{
-			case 0://左键单击
-				if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) {
+			case 0://单击
+				if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) {//左键单击
 					
 					if (mousePosX >= nColorBoxPosX) { //点击了颜料区域
 						switch (mousePosY) {
+						case 0://返回
+							return;
 						case 2:
 							nBrushColorNum = MAP_SPACE;
 							break;
@@ -129,12 +158,83 @@ void CMaps::customMapData()
 						case 14:
 							nBrushColorNum = MAP_RIVER;
 							break;
+						case 28: //导入关卡
+							break;
+						case 29://选择导入的关卡号
+
+							break;
+						case 30://保存为关卡地图
+							printChar(MAPWIDTH + 2, 30, "保存中...        ", COLOR_RED);//坐标对应菜单
+							
+							for (int i = 1; i < 10; i++) {
+								int nFileNum = i;
+								stringstream stream;
+								stream << nFileNum;
+								string  strFile =  stream.str();
+								strFile.insert(0, "map\\"); //拼凑文件路径
+								const char * pFilename = strFile.c_str();
+								FILE * pFile;
+								errno_t errNum = fopen_s(&pFile, pFilename, "rb");
+					
+								if (errNum != 0) {//文件不存在
+									FILE* fpFile;
+									fopen_s(&fpFile, pFilename, "wb");
+									//写入静态地图数据
+									fwrite(m_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, fpFile);
+									fclose(fpFile);
+									printChar(MAPWIDTH + 2, 30, "保存成功...        ", COLOR_RED);
+									Sleep(1000);
+									printChar(MAPWIDTH + 2, 30, "【保存为关卡地图:自动追加】", COLOR_GRAY);//坐标对应菜单
+									break;
+								}
+								else {
+									fclose(pFile);
+								}
+							
+							}
+							break;
+						case 31://强制保存为关卡 nLevelPass
+							printChar(MAPWIDTH + 2, 31, "保存中...        ", COLOR_RED);
+							//拼凑文件路径
+							{
+								stringstream stream;
+								stream << nLevelPass;
+								string  strLevel = stream.str();
+								strLevel.insert(0, "map\\");
+
+								FILE* fpFile;
+								fopen_s(&fpFile, (char *)strLevel.c_str(), "wb");
+								//写入静态地图数据
+								fwrite(m_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, fpFile);
+								fclose(fpFile);
+							}
+							printChar(MAPWIDTH + 2, 31, "保存成功...        ", COLOR_RED);
+							Sleep(1000);
+							printChar(MAPWIDTH + 2, 31, "【强制保存为如下关卡：】", COLOR_GRAY);//坐标对应菜单
+							break;
+						case 32: //调节关卡数字
+							if (mousePosX == MAPWIDTH + 5) {//减小关卡数字；
+								nLevelPass--;
+								nLevelPass = nLevelPass >= 1 ? nLevelPass : 1;
+								
+							}
+							else if (mousePosX == MAPWIDTH + 7) { //增大关卡数字
+								nLevelPass++;
+							}
+							{
+							printChar(MAPWIDTH + 6, 32, "  ", COLOR_GRAY); //清空数字， 防止10以上数字残留
+							stringstream stream;
+							stream << nLevelPass;
+							string  strLevel = stream.str();
+							printChar(MAPWIDTH + 6, 32, (char *)strLevel.c_str(), COLOR_GRAY);
+							}
+							break;
 						default:
 							//
 							break;
 						}
 					}
-					else if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
+					else if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 3 && mousePosY < MAPHEIGHT - 4) {
 						//内容区单击
 						if (nBrushColorNum == m_nMap[mousePosY][mousePosX]) { //取消
 							m_nMap[mousePosY][mousePosX] = 0;
@@ -153,7 +253,7 @@ void CMaps::customMapData()
 				break;
 			case DOUBLE_CLICK:
 				//内容区双击 
-				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
+				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 3 && mousePosY < MAPHEIGHT - 4) {
 					m_nMap[mousePosY][mousePosX] = nBrushColorNum;
 					reDrawMapPoint(mousePosY, mousePosX);
 					//激活或者取消滑动绘图
@@ -163,7 +263,7 @@ void CMaps::customMapData()
 			case MOUSE_MOVED:
 				mousePosX = mer.dwMousePosition.X / 2;
 				mousePosY = mer.dwMousePosition.Y;
-				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 0 && mousePosY < MAPHEIGHT - 1) {
+				if (mousePosX > 0 && mousePosX < MAPWIDTH - 1 && mousePosY > 3 && mousePosY < MAPHEIGHT - 4) {
 					//内容区
 					if (activeScrollPainting) { // 滑动绘图
 						m_nMap[mousePosY][mousePosX] = nBrushColorNum;
@@ -181,13 +281,11 @@ void CMaps::customMapData()
 				if (row == 0 || row == MAPHEIGHT - 1 || col == 0 || col == MAPWIDTH - 1) {
 					if (activeScrollPainting) {
 						CMaps::printChar(col, row, "■", COLOR_YELLOW);
-						printChar(MAPWIDTH + 2, MAPHEIGHT, "滑动绘图已开启", COLOR_YELLOW);
-						printChar(MAPWIDTH + 2, MAPHEIGHT +1, "双击关闭", COLOR_YELLOW);
+						printChar(1, MAPHEIGHT, "滑动绘图已开启: 双击关闭", COLOR_YELLOW);
 					}
 					else {
 						CMaps::printChar(col, row, "■", COLOR_GRAY);
-						printChar(MAPWIDTH + 2, MAPHEIGHT, "             ", COLOR_GRAY);
-						printChar(MAPWIDTH + 2, MAPHEIGHT + 1, "          ", COLOR_GRAY);
+						printChar(1, MAPHEIGHT, "                                                                ", COLOR_GRAY);
 					}
 					
 				}
@@ -223,6 +321,9 @@ void CMaps::reDrawMapPoint(int row, int col)
 	else if (m_nMap[row][col] == MAP_RIVER) {
 		printChar(col, row, "≈", COLOR_GRAY);
 	}
+	else if (m_nMap[row][col] == MAP_HEART) {
+		printChar(col, row, "★", COLOR_RED);
+	}
 	else {
 		printf("未定义的地图物体\n");
 	}
@@ -235,6 +336,11 @@ void CMaps::drawMap()
 			reDrawMapPoint(row, col);
 		}
 	}
+
+}
+
+void CMaps::readStaticMapFile(CMaps& maps, int fileNum)
+{
 
 }
 

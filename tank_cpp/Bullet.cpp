@@ -78,6 +78,12 @@ void CBullet::removeInvalidBullet()
 			continue;
 		} 
 		// 开始静态地图检测
+		else if (m_pMaps->m_nMap[posY][posX] == MAP_HEART) { //打击了心脏： 子弹失效
+			m_vecBullet[i]->isValid = false;
+			//m_pMaps->m_pBulletMap[posY][posX] = NULL;
+			m_pMaps->m_isHeartBroken = true;
+			continue;
+		}
 		else if (m_pMaps->m_nMap[posY][posX] == MAP_STONE) { //stone: 子弹失效
 			m_vecBullet[i]->isValid = false;
 			m_pMaps->m_pBulletMap[posY][posX] = NULL;

@@ -19,6 +19,7 @@ using namespace std;
 #define MAP_ICE   16
 #define MAP_TREE  32
 #define MAP_RIVER 64
+#define MAP_HEART  128
 
 //坐标结构体
 typedef struct _POS {

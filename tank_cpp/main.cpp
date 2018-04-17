@@ -26,7 +26,7 @@ int main()
 			ctrl.playTank(1);//开始游戏
 			break;
 		case 2:
-			ctrl.playTank(2); //自定义游戏
+			ctrl.playTank(2); //编辑地图
 			break;
 		case 3:
 			ctrl.playTank(3); //读档游戏

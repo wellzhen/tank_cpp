@@ -48,12 +48,11 @@ void CTank::__initTankShapeModel()
 
 void CTank::initNpcTank(int Count)
 {
+	Count = Count > 18 ? 18 : Count;
 	for (int nNum = 0; nNum < Count; nNum++) {
 		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
 		pTank->isNPC = true;
-		pTank->posX = 2 + nNum * 3;
-		pTank->posY = 2;
-		pTank->color = COLOR_RED;
+		pTank->color = COLOR_BLUE;
 		pTank->dir = DIR_DOWN;
 		pTank->maxHP = 100;
 		pTank->curHP = 100;
@@ -67,7 +66,17 @@ void CTank::initNpcTank(int Count)
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;
 		pTank->isAlive = true;
-
+		//坐标
+		int X;
+		int Y = 2;
+		if (nNum % 2 == 0) { //布置在左边
+			X = 2 + (nNum / 2) * 3;
+		}
+		else { //布置在右边
+			X = MAPWIDTH - 3 - ((nNum-1)/2)*3;
+		}
+		pTank->posX = X;
+		pTank->posY = Y;
 		m_vecTank.push_back(pTank);
 		drawTank(m_vecTank.size() - 1, true);
 	}
@@ -79,7 +88,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
 			int nDir = rand() % 4;
-			moveTank(nDir, index); //移动
+			//moveTank(nDir, index); //移动
 			bullets.shootBullet(m_vecTank, index); //射击
 		}
 	}
@@ -92,7 +101,7 @@ void CTank::initPlayerTank(int Count)
 		pTank->isNPC = false;
 		pTank->posX = MAPWIDTH / 2 - 4 + 8* i;
 		pTank->posY = MAPHEIGHT - 3;
-		pTank->color = COLOR_BLUE;
+		pTank->color = COLOR_RED;
 		pTank->dir = DIR_UP;
 		pTank->maxHP = 100;
 		pTank->curHP = 100;
@@ -135,6 +144,11 @@ void CTank::drawTank( int index, bool isShow)
 					if (m_pMaps->m_nMap[row][col] == MAP_GRASS || m_pMaps->m_nMap[row][col] == MAP_ICE) {//植物被破坏
 						m_pMaps->m_vecDamagedPlant.push_back({ col, row });   //同步受损植物地图
 					}
+					else if (m_pMaps->m_nMap[row][col] == MAP_HEART) {//检测心脏是否被碾压
+						m_pMaps->m_isHeartBroken = true;
+					}
+					
+					
 				}
 				else {
 					m_pMaps->printChar(col, row, "  ", COLOR_BLACK);
@@ -145,6 +159,14 @@ void CTank::drawTank( int index, bool isShow)
 				}
 			}
 		}
+	}
+
+}
+
+void CTank::initDrawAllTank(bool isShow)
+{
+	for (int i = 0; i < m_vecTank.size(); i++) {
+		drawTank(i, true);
 	}
 }
 
@@ -282,20 +304,45 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 	return true;
 }
 
-void CTank::judgeAlive()
+int  CTank::judgeAlive()
 {
 	int playerNum = 0;
+	int NpcNum = 0;
 	for (unsigned int i = 0; i < m_vecTank.size(); i++) {
 		if (m_vecTank[i]->curHP > 0 || m_vecTank[i]->isAlive == false) { //不用判断:有血或者已死
+			if (m_vecTank[i]->isNPC && m_vecTank[i]->curHP > 0) {
+				NpcNum++;
+			}
+			else if(m_vecTank[i]->curHP > 0){
+				playerNum++;
+			}
 			continue;
 		}
 		if (m_vecTank[i]->nlife >= 1) { //用life换血
 			m_vecTank[i]->curHP = m_vecTank[i]->maxHP;
 			m_vecTank[i]->nlife = m_vecTank[i]->nlife - 1;
 			m_vecTank[i]->nDie = m_vecTank[i]->nDie + 1;
+			if (m_vecTank[i]->isNPC) {
+				NpcNum++;
+			}
+			else {
+				playerNum++;
+			}
+			continue;
 		}
 		//凉了
 		m_vecTank[i]->isAlive = false;
 		drawTank(i, false);
+	}
+
+	//判断双方存活的坦克数量
+	if (playerNum == 0) { //失败
+		return -1;  
+	}
+	else if (NpcNum == 0) { //胜利
+		return 1;
+	}
+	else {		// 继续
+		return 0;  
 	}
 }

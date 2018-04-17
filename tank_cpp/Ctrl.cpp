@@ -13,11 +13,11 @@ CCtrl::~CCtrl()
 void CCtrl::playTank(int gameType)
 {
 	int playerCount = 0;
-	if (gameType != 3) { //非读档
+	if (gameType != 3 && gameType!= 2) { //非读档和编辑地图
 		playerCount = getPlayerCount();//显示UI，获取玩家数量
 	}
-	if (gameType != 3 && playerCount == 0){ //debug
-		printf("玩家数量错误---\n");
+	if (gameType != 3 && gameType != 2&& playerCount == 0){ //debug
+		printf("debug: 玩家数量错误---\n");
 		Sleep(5000);
 	}
 	//开始布置游戏数据
@@ -28,25 +28,36 @@ void CCtrl::playTank(int gameType)
 	//清理全局数据（push_back的数据）-- need ?
 	//clearGlobalData(maps, tanks, bullets);
 	if (gameType == 1) { //经典游戏
-		maps.initMapData();
+		//maps.initStaticMapData(); //改为读取关卡文件
+		int nChoosedMapFile = chooseLevelPassMenu();//显示关卡菜单并选择
+		if (nChoosedMapFile == 0) { //返回主菜单
+			return;
+		}
+		else {//读取地图文件，获取地图信息
+
+		}
 		maps.drawMap();
 		//初始化玩家坦克,并显示:
 		tanks.initPlayerTank(playerCount);
 		//初始化NPC坦克， 并显示
-		tanks.initNpcTank(2);
+		tanks.initNpcTank(4);
 	}
-	else if (gameType == 2) {//自定义地图
+	else if (gameType == 2) {//编辑地图： 坦克是占位用的
 		maps.showNeedStaticObj();
 		maps.initOuterWall();
+		maps.initHeart();
 		maps.drawMap();
+		//初始化玩家坦克
+		tanks.initPlayerTank(2);
+		//初始化NPC坦克
+		tanks.initNpcTank(18);
+		//显示坦克
+		tanks.initDrawAllTank(true);
+
 		maps.customMapData();
 
-		//初始化玩家坦克
-		tanks.initPlayerTank(playerCount);
-		tanks.drawTank(0, true);
-		//初始化NPC坦克
-		tanks.initNpcTank(4);
-		tanks.drawTank(1, true);
+		return; //change：直接返回界面
+		
 	}
 	else if (gameType == 3) {//读档
 		readArchive(maps, tanks, bullets);
@@ -103,10 +114,95 @@ void CCtrl::playTank(int gameType)
 		tanks.autoRunNpcTank(bullets);
 		//子弹前进
 		bullets.runBullet();
+		//判断心脏
+		if (maps.m_isHeartBroken) { //失败
+			Sleep(2000);
+			return;
+		}
 		//判断坦克生存情况
-		tanks.judgeAlive();
+		int tankResult = tanks.judgeAlive();
+		if (tankResult == -1) { //失败
+			Sleep(2000);
+			return;
+		}
+		else if (tankResult == 1) { //胜利
+			Sleep(2000);
+			return;
+		}
 		maps.recoverDamagedPlant();
 	}
+
+}
+
+int CCtrl::chooseLevelPassMenu()
+{
+	vector<int>  vecPassLevel;//保存有的关卡
+	for (int i = 1; i < 38; i++) {
+		int nFileNum = i;
+		stringstream stream;
+		stream << nFileNum;
+		string  strFile = stream.str();
+		strFile.insert(0, "map\\"); //拼凑文件路径
+		const char * pFilename = strFile.c_str();
+		FILE * pFile;
+		errno_t errNum = fopen_s(&pFile, pFilename, "rb");
+
+		if (errNum == 0) {//文件存在
+			vecPassLevel.push_back(i);
+			fclose(pFile);
+		}
+	}
+	//确定显示的起始行坐标row
+	int startPosX = int((MAPWIDTH - 8) / 2);
+	int startPosY = int((MAPHEIGHT - vecPassLevel.size())/2);
+	//打印界面
+	system("cls");
+	for ( int i = 0; i < (int)vecPassLevel.size(); i++) {
+		int nFileNum = vecPassLevel[i];
+		stringstream stream;
+		stream << nFileNum;
+		string  strFile = stream.str();
+		char * pNum = (char *)strFile.c_str();
+		CMaps::printChar(startPosX - 6, startPosY + i, "关卡 【 ", COLOR_GRAY);
+		CMaps::printChar(startPosX, startPosY + i, pNum, COLOR_GRAY);
+		CMaps::printChar(startPosX + 4, startPosY + i, "  】", COLOR_GRAY);
+	}
+	CMaps::printChar(startPosX, startPosY + vecPassLevel.size(), "【返回】", COLOR_RED);//返回
+
+	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+	INPUT_RECORD stcRecord = { 0 };
+	DWORD dwRead;
+	SetConsoleMode(hStdin, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
+	int mousePosX = 0;
+	int mousePosY = 0;
+	while (1)
+	{
+		ReadConsoleInput(hStdin, &stcRecord, 1, &dwRead);
+		if (stcRecord.EventType == MOUSE_EVENT) {
+			MOUSE_EVENT_RECORD mer = stcRecord.Event.MouseEvent;
+			switch (mer.dwEventFlags)
+			{
+			case 0://单击
+				if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) { //左键单击
+					if (mousePosX > startPosX - 10 && mousePosX < startPosX + 20 ) //限定鼠标左右范围
+						if (mousePosY >= startPosY && mousePosY <= startPosY + (int)vecPassLevel.size() - 1) {    //限定鼠标点击的Y方向范围
+							int vecIndex = mousePosY - startPosY;
+							return vecPassLevel[vecIndex];
+						} else if(mousePosY == startPosY + (int)vecPassLevel.size()) {
+							return 0;
+					}
+				}
+				break;
+			case MOUSE_MOVED:
+				mousePosX = mer.dwMousePosition.X / 2;
+				mousePosY = mer.dwMousePosition.Y;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
 
 }
 
@@ -139,7 +235,7 @@ int CCtrl::getPlayerCount()
 
 void CCtrl::initConsoleWindow()
 {
-	system("mode con cols=140 lines=50");
+	system("mode con cols=160 lines=50");
 }
 
 void CCtrl::initInputShift()
@@ -195,8 +291,9 @@ void  CCtrl::showWelcomeWords()
 void CCtrl::showMenu()
 {
 
-	char menu[][30] = { "1  经典游戏  ",
-		"2  自定义地图",
+	char menu[][30] = { 
+		"1  闯关游戏  ",
+		"2  编辑地图  ",
 		"3  读档游戏  ",
 		"4  退出游戏  "
 	};
