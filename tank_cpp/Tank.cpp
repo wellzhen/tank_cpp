@@ -88,7 +88,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
 			int nDir = rand() % 4;
-			//moveTank(nDir, index); //ÒÆ¶¯
+			moveTank(nDir, index); //ÒÆ¶¯
 			bullets.shootBullet(m_vecTank, index); //Éä»÷
 		}
 	}

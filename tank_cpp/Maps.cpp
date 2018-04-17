@@ -2,14 +2,15 @@
 
 CMaps::CMaps()
 {
-	int m_nMap[MAPHEIGHT][MAPWIDTH] = { 0 };
-	TANK * m_pTankMap[MAPHEIGHT][MAPWIDTH] = { NULL };
-	BULLET *  m_pBulletMap[MAPHEIGHT][MAPWIDTH] = { NULL };
+	m_nMap[MAPHEIGHT][MAPWIDTH] = { 0 };
+	m_pTankMap[MAPHEIGHT][MAPWIDTH] = { NULL };
+	m_pBulletMap[MAPHEIGHT][MAPWIDTH] = { NULL };
 	m_isHeartBroken = false;
 }
 
 CMaps::~CMaps()
 {
+
 }
 
 void CMaps::initOuterWall()
@@ -93,22 +94,21 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 14, "≈ 河流", COLOR_GRAY);   //河流
 
 
-	printChar(nDestPosX, 28, "【选择导入如下关卡：】", COLOR_GRAY);
-	printChar(nDestPosX + 3, 29, "←", COLOR_GRAY); printChar(nDestPosX + 4, 29, " ", COLOR_GRAY); printChar(nDestPosX + 5, 29, "→", COLOR_GRAY);
+	printChar(nDestPosX, 28, "【选择导入已有关卡地图：】", COLOR_GRAY);
+	printChar(nDestPosX + 3, 29, "←", COLOR_GRAY); printChar(nDestPosX + 4, 29, "  ", COLOR_GRAY); printChar(nDestPosX + 5, 29, "→", COLOR_GRAY);
 
-	printChar(nDestPosX, 30, "【保存为关卡地图:自动追加】", COLOR_GRAY);
-	printChar(nDestPosX , 31, "【强制保存为如下关卡：】", COLOR_GRAY);
-	printChar(nDestPosX+3, 32, "←", COLOR_GRAY); printChar(nDestPosX + 4, 32, " ", COLOR_GRAY); printChar(nDestPosX + 5, 32, "→", COLOR_GRAY);
+	printChar(nDestPosX, 30, "【保存关卡地图:自动编号】", COLOR_GRAY);
+	printChar(nDestPosX , 31, "【强制保存为所选关卡：】", COLOR_GRAY);
+	printChar(nDestPosX+3, 32, "←", COLOR_GRAY); printChar(nDestPosX + 4, 32, "  ", COLOR_GRAY); printChar(nDestPosX + 5, 32, "→", COLOR_GRAY);
 	
 
-	printChar(nDestPosX, MAPHEIGHT - 3, "Tip 左键编辑", COLOR_GRAY);
-	printChar(nDestPosX, MAPHEIGHT - 2, "    双击删除", COLOR_GRAY);
-	printChar(nDestPosX, MAPHEIGHT - 1, "    右键游戏", COLOR_GRAY);
+	printChar(nDestPosX, MAPHEIGHT - 3, "Tip 编辑", COLOR_GRAY);
+	printChar(nDestPosX, MAPHEIGHT - 2, "    删除", COLOR_GRAY);
+	printChar(nDestPosX, MAPHEIGHT - 1, "    游戏", COLOR_GRAY);
 }
 
 void CMaps::customMapData()
 {
-	initOuterWall();
 	int nColorBoxPosX = MAPWIDTH + 1; //同showNeedStaticObj()保持一致
 
 	int nBrushColorNum = 0; //鼠标的刷子颜色
@@ -123,6 +123,7 @@ void CMaps::customMapData()
 
 	bool activeScrollPainting = false;
 	int nLevelPass = 1;//强制要保存的关卡号
+	int nImportLevelPass = -1; //想要导入的关卡号
 	while (1)
 	{
 		ReadConsoleInput(hStdin, &stcRecord, 1, &dwRead);
@@ -161,9 +162,56 @@ void CMaps::customMapData()
 						case 28: //导入关卡
 							break;
 						case 29://选择导入的关卡号
+							{
+								bool hasFind = false;
+								int  loopTimes = 0;
+								while(!hasFind ) {
+									loopTimes++;
+									if (loopTimes > 40) { //找不到文件了
+										break;
+									}
+									if (mousePosX == MAPWIDTH + 5) {//减小关卡数字；
+										nImportLevelPass--;
+										nImportLevelPass = nImportLevelPass >= 1 ? nImportLevelPass : 38;
 
+									}
+									else if (mousePosX == MAPWIDTH + 7) { //增大关卡数字
+										nImportLevelPass++;
+										nImportLevelPass = nImportLevelPass <= 38 ? nImportLevelPass : 1;
+									}
+									int nFileNum = nImportLevelPass;
+									stringstream stream;
+									stream << nFileNum;
+									string  strFile = stream.str();
+									string  strFileCopy = strFile;
+									char * strFileNum = (char *)strFileCopy.c_str();  //UI显示使用
+									strFile.insert(0, "map\\"); //拼凑文件路径
+									const char * pFilename = strFile.c_str();
+									FILE * pFile;
+									errno_t errNum = fopen_s(&pFile, pFilename, "rb");
+
+									if (errNum == 0) {//文件存在: 读取-》导入
+										hasFind = true;
+										fread_s(m_nMap, MAPHEIGHT*MAPWIDTH * sizeof(int), sizeof(int), MAPWIDTH*MAPHEIGHT, pFile);
+										fclose(pFile);
+										//显示当前的关卡号码
+										printChar(MAPWIDTH + 6, 29, "  ", COLOR_GRAY);//清空
+										printChar(MAPWIDTH + 6, 29, strFileNum, COLOR_GRAY);
+										//重画
+										for (int i = 4; i < MAPHEIGHT - 4; i++) {
+											for (int j = 0; j < MAPWIDTH; j++) {
+												reDrawMapPoint(i, j);
+											}
+										}
+	
+									}
+								}
+								if (!hasFind) {
+									printChar(MAPWIDTH + 6, 29, "NO", COLOR_GRAY);
+								}
+							}
 							break;
-						case 30://保存为关卡地图
+						case 30://保存为关卡地图: 自动编号
 							printChar(MAPWIDTH + 2, 30, "保存中...        ", COLOR_RED);//坐标对应菜单
 							
 							for (int i = 1; i < 10; i++) {
@@ -220,6 +268,7 @@ void CMaps::customMapData()
 							}
 							else if (mousePosX == MAPWIDTH + 7) { //增大关卡数字
 								nLevelPass++;
+								nLevelPass = nLevelPass <= 36 ? nLevelPass : 36;
 							}
 							{
 							printChar(MAPWIDTH + 6, 32, "  ", COLOR_GRAY); //清空数字， 防止10以上数字残留
@@ -339,9 +388,19 @@ void CMaps::drawMap()
 
 }
 
-void CMaps::readStaticMapFile(CMaps& maps, int fileNum)
+void CMaps::readStaticMapFile(int nFileNum)
 {
-
+	//配凑地图文件路径
+	stringstream stream;
+	stream << nFileNum;
+	string  strFile = stream.str();
+	strFile.insert(0, "map\\"); //拼凑文件路径
+	const char * pFilename = strFile.c_str();
+	FILE * pFile;
+	fopen_s(&pFile, pFilename, "rb");
+	//地图g_nMap数据
+	fread_s(m_nMap, sizeof(int)*MAPWIDTH*MAPHEIGHT, sizeof(int), MAPWIDTH*MAPHEIGHT, pFile);
+	fclose(pFile);
 }
 
 void CMaps::recoverDamagedPlant()

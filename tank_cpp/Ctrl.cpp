@@ -27,14 +27,14 @@ void CCtrl::playTank(int gameType)
 	CBullet bullets(&maps);
 	//清理全局数据（push_back的数据）-- need ?
 	//clearGlobalData(maps, tanks, bullets);
-	if (gameType == 1) { //经典游戏
+	if (gameType == 1) { //通关游戏
 		//maps.initStaticMapData(); //改为读取关卡文件
 		int nChoosedMapFile = chooseLevelPassMenu();//显示关卡菜单并选择
 		if (nChoosedMapFile == 0) { //返回主菜单
 			return;
 		}
 		else {//读取地图文件，获取地图信息
-
+			maps.readStaticMapFile(nChoosedMapFile);
 		}
 		maps.drawMap();
 		//初始化玩家坦克,并显示:
