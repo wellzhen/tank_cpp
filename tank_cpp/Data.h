@@ -88,3 +88,20 @@ typedef struct _TANK {
 #define	COLOR_GRAY   8  //»ÒÉ«
 
 // ¡î ¡ô¡ç  ¡ï¡ô
+
+//ÐÇ½Úµã
+
+typedef struct _STARNODE {
+	int nG; //ÒÆ¶¯ËðºÄ
+	int nH; //×î¶Ì¾àÀë
+	int nF; // nG + nH
+	int nPosX;
+	int nPosY;
+	int nFromX;
+	int nFromY;
+	void setH_F(_STARNODE* star) 
+	{
+		nH = abs(nPosX - star->nPosX) + abs(nPosY - star->nPosY);
+		nF = nH + nG;
+	}
+}STARNODE;

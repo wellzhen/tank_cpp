@@ -212,7 +212,7 @@ void CMaps::customMapData()
 							}
 							break;
 						case 30://保存为关卡地图: 自动编号
-							printChar(MAPWIDTH + 2, 30, "保存中...        ", COLOR_RED);//坐标对应菜单
+							printChar(MAPWIDTH + 2, 30, "保存中...    ", COLOR_RED);//坐标对应菜单
 							
 							for (int i = 1; i < 10; i++) {
 								int nFileNum = i;
@@ -228,11 +228,12 @@ void CMaps::customMapData()
 									FILE* fpFile;
 									fopen_s(&fpFile, pFilename, "wb");
 									//写入静态地图数据
+									initHeart(); //home
 									fwrite(m_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, fpFile);
 									fclose(fpFile);
 									printChar(MAPWIDTH + 2, 30, "保存成功...        ", COLOR_RED);
 									Sleep(1000);
-									printChar(MAPWIDTH + 2, 30, "【保存为关卡地图:自动追加】", COLOR_GRAY);//坐标对应菜单
+									printChar(MAPWIDTH + 2, 30, "【保存为缺失关卡】", COLOR_GRAY);//坐标对应菜单
 									break;
 								}
 								else {
@@ -253,12 +254,13 @@ void CMaps::customMapData()
 								FILE* fpFile;
 								fopen_s(&fpFile, (char *)strLevel.c_str(), "wb");
 								//写入静态地图数据
+								initHeart(); //home
 								fwrite(m_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, fpFile);
 								fclose(fpFile);
 							}
 							printChar(MAPWIDTH + 2, 31, "保存成功...        ", COLOR_RED);
 							Sleep(1000);
-							printChar(MAPWIDTH + 2, 31, "【强制保存为如下关卡：】", COLOR_GRAY);//坐标对应菜单
+							printChar(MAPWIDTH + 2, 31, "【保存:指定关卡号】", COLOR_GRAY);//坐标对应菜单
 							break;
 						case 32: //调节关卡数字
 							if (mousePosX == MAPWIDTH + 5) {//减小关卡数字；
@@ -334,7 +336,7 @@ void CMaps::customMapData()
 					}
 					else {
 						CMaps::printChar(col, row, "■", COLOR_GRAY);
-						printChar(1, MAPHEIGHT, "                                                                ", COLOR_GRAY);
+						printChar(1, MAPHEIGHT, "                                            ", COLOR_GRAY);
 					}
 					
 				}

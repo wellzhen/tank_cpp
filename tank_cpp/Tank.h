@@ -2,6 +2,7 @@
 #include "Data.h"
 #include "Maps.h"
 #include "Bullet.h"
+#include "Astar.h"
 class CTank
 {
 public:

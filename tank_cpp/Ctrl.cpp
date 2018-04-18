@@ -235,7 +235,7 @@ int CCtrl::getPlayerCount()
 
 void CCtrl::initConsoleWindow()
 {
-	system("mode con cols=160 lines=50");
+	system("mode con cols=150 lines=50");
 }
 
 void CCtrl::initInputShift()
@@ -408,4 +408,11 @@ void CCtrl::clearGlobalData(CMaps& maps, CTank& tanks, CBullet& bullets)
 			maps.m_nMap[row][col] = 0;
 		}
 	}
+}
+
+
+
+void CCtrl::showGameInfo(CTank& tanks, CBullet& bullets)
+{
+
 }

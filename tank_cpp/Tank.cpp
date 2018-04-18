@@ -85,13 +85,61 @@ void CTank::initNpcTank(int Count)
 void CTank::autoRunNpcTank(CBullet& bullets)
 {
 	srand((unsigned int)time(NULL));
+	POS endHeart;//目标 home
+	endHeart.posX = MAPWIDTH / 2 - 1;
+	endHeart.posY = MAPHEIGHT - 3;
+	POS player01;
+	player01.posX = m_vecTank[0]->posX;
+	player01.posY = m_vecTank[0]->posY;
+
+	POS player02;
+	player02.posX = m_vecTank[1]->posX;
+	player02.posY = m_vecTank[1]->posY;
+
+	POS targetPos;
+
+	bool bToHeart = false;
+	bool bToPlayer01 = false;
+	bool bToPlayer02 = false;
+	CAstar Astar;
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
-			int nDir = rand() % 4;
-			//moveTank(nDir, index); //移动
+			
+			POS start;
+			start.posX = m_vecTank[index]->posX;
+			start.posY = m_vecTank[index]->posY;
+			if (bToHeart == false) {
+				targetPos = endHeart;
+				bToHeart = true;
+			}
+			else if (m_vecTank[0]->isAlive && bToPlayer01 == false) {
+				targetPos = player01;
+				bToPlayer01 = true;
+			}
+			else if (!m_vecTank[1]->isNPC && m_vecTank[1]->isAlive) {
+				targetPos = player02;
+				bToPlayer02 = true;
+			}
+			else {
+				targetPos = player01;
+			}
+			
+			int nDir = -1;
+			//测试
+			targetPos = player01;
+			if (Astar.searchPath(*m_pMaps, start, targetPos)) {
+				nDir = Astar.getMoveDir(start);
+			}
+			if (nDir == -1) {
+				continue;
+			}
+			
+			moveTank(nDir, index); //移动
 			bullets.shootBullet(m_vecTank, index); //射击
 		}
 	}
+
+
 }
 
 void CTank::initPlayerTank(int Count)
@@ -165,7 +213,7 @@ void CTank::drawTank( int index, bool isShow)
 
 void CTank::initDrawAllTank(bool isShow)
 {
-	for (int i = 0; i < m_vecTank.size(); i++) {
+	for (unsigned int i = 0; i < m_vecTank.size(); i++) {
 		drawTank(i, true);
 	}
 }

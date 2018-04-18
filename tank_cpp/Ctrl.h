@@ -43,5 +43,9 @@ public:
 	void readArchive(CMaps& maps, CTank& tanks, CBullet& bullets);
 	//清空全局变量
 	void clearGlobalData(CMaps& maps, CTank& tanks, CBullet& bullets);
+	//右侧显示游戏信息
+	void showGameInfo(CTank& tanks, CBullet& bullets);
+
+
 };
 
