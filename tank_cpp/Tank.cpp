@@ -88,7 +88,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
 			int nDir = rand() % 4;
-			moveTank(nDir, index); //移动
+			//moveTank(nDir, index); //移动
 			bullets.shootBullet(m_vecTank, index); //射击
 		}
 	}
@@ -175,14 +175,6 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 	if (m_vecTank[index]->isAlive == false) {
 		return false;
 	}
-	//速度设置
-	clock_t start_time = m_vecTank[index]->last_move_time;
-	clock_t end_time = clock();
-	if (end_time - start_time < 150) {
-		return false;
-	}
-	m_vecTank[index]->last_move_time = end_time;
-
 	//参数；
 	int nDestPosX = m_vecTank[index]->posX;
 	int nDestPosY = m_vecTank[index]->posY;
@@ -191,6 +183,14 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 	int  blockNumSum = MAP_STONE + MAP_BRICK + MAP_RIVER;
 	int changeValue = m_vecTank[index]->dir - nDirNum;
 	if (changeValue == 0) { //前进，修改坐标,方向不变
+		//速度设置：只有前进限制速度
+		clock_t start_time = m_vecTank[index]->last_move_time;
+		clock_t end_time = clock();
+		if (end_time - start_time < 150) {
+			return false;
+		}
+		m_vecTank[index]->last_move_time = end_time;
+		//开始判断
 		switch (m_vecTank[index]->dir) {
 		case DIR_UP:
 			if ((m_pMaps->m_nMap[nDestPosY - 1][nDestPosX - 1] & blockNumSum) != 0 || (m_pMaps->m_nMap[nDestPosY - 2][nDestPosX] & blockNumSum) != 0 || (m_pMaps->m_nMap[nDestPosY - 1][nDestPosX + 1] & blockNumSum) != 0
@@ -258,6 +258,24 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 		nDestDir = nDirNum;
 	}
 	else if (changeValue == 2 || changeValue == -2) { //反向移动: 只改变坐标，方向不变（尾部三个方向不能有物体）
+		//尝试两次顺时针转
+		int nTryDir = m_vecTank[index]->dir + 1;
+		nTryDir = nTryDir <= 3 ? nTryDir : 0;
+		if (moveTank(nTryDir, index)) { //移动成功， 再顺时针移动一次
+			nTryDir++;
+			nTryDir = nTryDir <= 3 ? nTryDir : 0;
+			if (moveTank(nTryDir, index)) { //二次成功
+				return true;
+			}
+			else {//逆时针，还原方向
+				nTryDir--;
+				nTryDir = nTryDir >= 0 ? nTryDir : 0;
+				moveTank(nTryDir, index);
+				//只能倒退了
+			}
+		}
+
+		//开始倒车的判断
 		switch (m_vecTank[index]->dir) {
 		case DIR_UP:
 			if ((m_pMaps->m_nMap[nDestPosY + 2][nDestPosX - 1] & blockNumSum) != 0 || (m_pMaps->m_nMap[nDestPosY + 1][nDestPosX] & blockNumSum) != 0 || (m_pMaps->m_nMap[nDestPosY + 2][nDestPosX + 1] & blockNumSum) != 0
