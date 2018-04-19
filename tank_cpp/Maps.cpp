@@ -392,6 +392,12 @@ void CMaps::drawMap()
 
 void CMaps::readStaticMapFile(int nFileNum)
 {
+	//先清空m_nMaps;
+	for (int row = 0; row < MAPHEIGHT; row++) {
+		for (int col = 0; col < MAPWIDTH; col++) {
+			m_nMap[row][col] = 0;
+		}
+	}
 	//配凑地图文件路径
 	stringstream stream;
 	stream << nFileNum;

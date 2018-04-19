@@ -240,9 +240,9 @@ void CAstar::__updateInvalidPoint(CMaps& maps, POS startPoint)
 						(
 							maps.m_pTankMap[row][col] != NULL &&  maps.m_pTankMap[row][col] ->isNPC &&
 							(
-								(abs(maps.m_pTankMap[row][col]->posX - startPoint.posX) > 1 && abs(maps.m_pTankMap[row][col]->posX - startPoint.posX) < 5)
-								//||
-								//(abs(maps.m_pTankMap[row][col]->posY - startPoint.posY) > 1 && abs(maps.m_pTankMap[row][col]->posY - startPoint.posY) < 5)
+								(abs(maps.m_pTankMap[row][col]->posX - startPoint.posX) >= 1 && abs(maps.m_pTankMap[row][col]->posX - startPoint.posX) < 5)
+								||
+								(abs(maps.m_pTankMap[row][col]->posY - startPoint.posY) >= 1 && abs(maps.m_pTankMap[row][col]->posY - startPoint.posY) < 5)
 							)
 						)
 				

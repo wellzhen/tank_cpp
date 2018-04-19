@@ -48,24 +48,26 @@ void CTank::__initTankShapeModel()
 
 void CTank::initNpcTank(int Count)
 {
+	srand((unsigned int)time(NULL));
 	Count = Count > 18 ? 18 : Count;
 	for (int nNum = 0; nNum < Count; nNum++) {
 		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
 		pTank->isNPC = true;
 		pTank->color = COLOR_YELLOW;
 		pTank->dir = DIR_DOWN;
-		pTank->maxHP = 100;
-		pTank->curHP = 100;
-		pTank->maxSpeed = 50;
-		pTank->curSpeed = 50;
+		pTank->maxHP = 60+ nNum * 20;
+		pTank->curHP = pTank->maxHP;
+		pTank->maxSpeed = 50 + rand()%50;
+		pTank->curSpeed = pTank->maxSpeed;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
-		pTank->nlife = 0;
+		pTank->nlife = 2;
 		pTank->nlevel = 1;
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;
 		pTank->isAlive = true;
+		pTank->nShape = nNum % 4 + 1;
 		//坐标
 		int X;
 		int Y = 2;
@@ -77,6 +79,8 @@ void CTank::initNpcTank(int Count)
 		}
 		pTank->posX = X;
 		pTank->posY = Y;
+		pTank->initPosX = X;
+		pTank->initPosY = Y;
 		m_vecTank.push_back(pTank);
 		drawTank(m_vecTank.size() - 1, true);
 	}
@@ -150,25 +154,29 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 
 void CTank::initPlayerTank(int Count)
 {
+	srand((unsigned int)time(NULL));
 	for (int i = 0; i < Count; i++) {
 		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
 		pTank->isNPC = false;
 		pTank->posX = MAPWIDTH / 2 - 4 + 8* i;
 		pTank->posY = MAPHEIGHT - 3;
+		pTank->initPosX = pTank->posX;
+		pTank->initPosY = pTank->posY;
 		pTank->color = COLOR_RED;
 		pTank->dir = DIR_UP;
 		pTank->maxHP = 100; 
 		pTank->curHP = 100;
-		pTank->maxSpeed = 80;//不要超过80
-		pTank->curSpeed = 80;
+		pTank->maxSpeed = 100+rand()%100;//不要超过80
+		pTank->curSpeed = pTank->maxSpeed;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
-		pTank->nlife = 30;  //------------------------------------test
+		pTank->nlife = 5;  //------------------------------------test
 		pTank->nlevel = 1;
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;
 		pTank->isAlive = true;
+		pTank->nShape = TANK_SHAPE5;
 
 		m_vecTank.push_back(pTank);
 		drawTank(m_vecTank.size() - 1, true);
@@ -194,7 +202,28 @@ void CTank::drawTank( int index, bool isShow)
 					//树林要隐藏坦克： 不显示也不擦除
 				}
 				else if (isShow) {
-					m_pMaps->printChar(col, row, "■", m_vecTank[index]->color);
+					char * shape;
+					switch (m_vecTank[index]->nShape) {
+					case TANK_SHAPE1:
+						shape = "◆";
+						break;
+					case TANK_SHAPE2:
+						shape = "●";
+						break;
+					case TANK_SHAPE3:
+						shape = "◎";
+						break;
+					case TANK_SHAPE4:
+						shape = "◆";
+						break;
+					case TANK_SHAPE5:
+						shape = "■";
+						break;
+					default:
+						shape = "※";
+						
+					}
+					m_pMaps->printChar(col, row, shape, m_vecTank[index]->color);
 					m_pMaps->m_pTankMap[row][col] = m_vecTank[index]; // 同步坦克地图
 															 //如果显示位置有植物
 					if (m_pMaps->m_nMap[row][col] == MAP_GRASS || m_pMaps->m_nMap[row][col] == MAP_ICE) {//植物被破坏
@@ -249,7 +278,7 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 		//速度设置：只有前进限制速度
 		clock_t start_time = m_vecTank[index]->last_move_time;
 		clock_t end_time = clock();
-		if (end_time - start_time < (160- m_vecTank[index]->curSpeed)*5) {
+		if (end_time - start_time < (200- m_vecTank[index]->curSpeed)*4) {
 			return false;
 		}
 		m_vecTank[index]->last_move_time = end_time;
@@ -409,6 +438,9 @@ int  CTank::judgeAlive()
 			else {
 				playerNum++;
 			}
+			drawTank(i, false);
+			m_vecTank[i]->posX = m_vecTank[i]->initPosX;
+			m_vecTank[i]->posY = m_vecTank[i]->initPosY;
 			continue;
 		}
 		//凉了
@@ -432,7 +464,7 @@ int  CTank::judgeAlive()
 void CTank::showTankInfo()
 {
 	stringstream stream;
-	for (int index = 0; index < m_vecTank.size(); index++) {
+	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		
 		int posX = MAPWIDTH + 1;
 		int posY = 2 + 4 * index;
@@ -441,11 +473,32 @@ void CTank::showTankInfo()
 		for (int row = posY - 1; row <= posY + 1; row++) {
 			for (int col = posX - 1; col <= posX + 1; col++) {
 				if (m_tankShape[dirNum][row - posY + 1][col - posX + 1] == 1) {
+					char * shape;
+					switch (m_vecTank[index]->nShape) {
+					case TANK_SHAPE1:
+						shape = "◆";
+						break;
+					case TANK_SHAPE2:
+						shape = "●";
+						break;
+					case TANK_SHAPE3:
+						shape = "◎";
+						break;
+					case TANK_SHAPE4:
+						shape = "◆";
+						break;
+					case TANK_SHAPE5:
+						shape = "■";
+						break;
+					default:
+						shape = "※";
+
+					}
 					if (!m_vecTank[index]->isAlive){ //死亡
-							m_pMaps->printChar(col, row, "■", COLOR_GRAY);
+							m_pMaps->printChar(col, row, shape, COLOR_GRAY);
 					}
 					else {
-						m_pMaps->printChar(col, row, "■", m_vecTank[index]->color);
+						m_pMaps->printChar(col, row, shape, m_vecTank[index]->color);
 					}
 				}
 			}
@@ -502,8 +555,6 @@ void CTank::showTankInfo()
 		else {
 			CMaps::printChar(posX + 2, posY + 1, "          ", COLOR_GRAY);
 		}
-
-		
 
 		stream.str(""); //防止内存累积
 	}

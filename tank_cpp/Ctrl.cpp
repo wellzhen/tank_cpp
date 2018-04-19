@@ -29,7 +29,7 @@ void CCtrl::playTank(int gameType)
 	//clearGlobalData(maps, tanks, bullets);
 	if (gameType == 1) { //通关游戏
 		//maps.initStaticMapData(); //改为读取关卡文件
-		int nChoosedMapFile = chooseLevelPassMenu();//显示关卡菜单并选择
+		int nChoosedMapFile = chooseLevelPassMenu(maps);//显示关卡菜单并选择
 		if (nChoosedMapFile == 0) { //返回主菜单
 			return;
 		}
@@ -115,8 +115,10 @@ void CCtrl::playTank(int gameType)
 		//子弹前进
 		bullets.runBullet();
 		//判断心脏
-		if (maps.m_isHeartBroken) { //失败
-			Sleep(2000);
+		if (maps.m_isHeartBroken) { //失败: 总部被摧毁
+			maps.readStaticMapFile(1001);
+			maps.drawMap();
+			Sleep(4000);
 			return;
 		}
 		//判断坦克生存情况
@@ -125,11 +127,15 @@ void CCtrl::playTank(int gameType)
 		showGameInfo(tanks, bullets);
 
 		if (tankResult == -1) { //失败
-			Sleep(2000);
+			maps.readStaticMapFile(1002);
+			maps.drawMap();
+			Sleep(4000);
 			return;
 		}
 		else if (tankResult == 1) { //胜利
-			Sleep(2000);
+			maps.readStaticMapFile(1000);
+			maps.drawMap();
+			Sleep(4000);
 			return;
 		}
 		maps.recoverDamagedPlant();
@@ -137,7 +143,7 @@ void CCtrl::playTank(int gameType)
 
 }
 
-int CCtrl::chooseLevelPassMenu()
+int CCtrl::chooseLevelPassMenu(CMaps& maps)
 {
 	vector<int>  vecPassLevel;//保存有的关卡
 	for (int i = 1; i < 38; i++) {
@@ -166,9 +172,9 @@ int CCtrl::chooseLevelPassMenu()
 		stream << nFileNum;
 		string  strFile = stream.str();
 		char * pNum = (char *)strFile.c_str();
-		CMaps::printChar(startPosX - 6, startPosY + i, "关卡 【 ", COLOR_GRAY);
-		CMaps::printChar(startPosX, startPosY + i, pNum, COLOR_GRAY);
-		CMaps::printChar(startPosX + 4, startPosY + i, "  】", COLOR_GRAY);
+		CMaps::printChar(startPosX - 6, startPosY + i, "关卡 【 ", COLOR_YELLOW);
+		CMaps::printChar(startPosX, startPosY + i, pNum, COLOR_YELLOW);
+		CMaps::printChar(startPosX + 4, startPosY + i, "  】", COLOR_YELLOW);
 	}
 	CMaps::printChar(startPosX, startPosY + vecPassLevel.size(), "【返回】", COLOR_RED);//返回
 
@@ -187,12 +193,41 @@ int CCtrl::chooseLevelPassMenu()
 			{
 			case 0://单击
 				if (mer.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED) { //左键单击
-					if (mousePosX > startPosX - 10 && mousePosX < startPosX + 20 ) //限定鼠标左右范围
+					if (mousePosX > startPosX - 10 && mousePosX < startPosX + 20) //限定鼠标左右范围
 						if (mousePosY >= startPosY && mousePosY <= startPosY + (int)vecPassLevel.size() - 1) {    //限定鼠标点击的Y方向范围
 							int vecIndex = mousePosY - startPosY;
-							return vecPassLevel[vecIndex];
-						} else if(mousePosY == startPosY + (int)vecPassLevel.size()) {
+							//读取地图
+							maps.readStaticMapFile(vecPassLevel[vecIndex]);
+							maps.drawMap();
+
+							for (int i = 0; i < (int)vecPassLevel.size(); i++) {
+								int nFileNum = vecPassLevel[i];
+								stringstream stream;
+								stream << nFileNum;
+								string  strFile = stream.str();
+								char * pNum = (char *)strFile.c_str();
+								CMaps::printChar(startPosX - 6, startPosY + i, "关卡 【 ", COLOR_YELLOW);
+								CMaps::printChar(startPosX, startPosY + i, pNum, COLOR_YELLOW);
+								CMaps::printChar(startPosX + 4, startPosY + i, "  】", COLOR_YELLOW);
+							}
+							CMaps::printChar(startPosX-2, startPosY + vecPassLevel.size(), "【返回】", COLOR_RED);//返回
+						}
+
+						//返回的按钮
+						if (mousePosY == startPosY + (int)vecPassLevel.size()) {
 							return 0;
+						}
+				
+				}
+				break;
+			case DOUBLE_CLICK:
+				if (mousePosX > startPosX - 10 && mousePosX < startPosX + 20) {//限定鼠标左右范围
+					if (mousePosY >= startPosY && mousePosY <= startPosY + (int)vecPassLevel.size() - 1) {    //限定鼠标点击的Y方向范围
+						int vecIndex = mousePosY - startPosY;
+						return vecPassLevel[vecIndex];
+					}
+					else if (mousePosY == startPosY + (int)vecPassLevel.size()) {
+						return 0;
 					}
 				}
 				break;
@@ -202,9 +237,9 @@ int CCtrl::chooseLevelPassMenu()
 				break;
 			default:
 				break;
-			}
-		}
-	}
+			}// switch
+		}//endif
+	}//while
 
 
 }

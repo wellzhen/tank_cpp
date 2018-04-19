@@ -44,6 +44,8 @@ typedef struct _BULLET {
 typedef struct _TANK {
 	int posX;
 	int posY;
+	int initPosX;
+	int initPosY;
 	bool isNPC;
 	int dir;
 	int color;
@@ -60,6 +62,7 @@ typedef struct _TANK {
 	int nlife;
 
 	int nlevel;
+	int nShape;
 
 	clock_t last_move_time;
 	clock_t last_shoot_time;
@@ -88,7 +91,11 @@ typedef struct _TANK {
 #define	COLOR_GRAY   8  //»ÒÉ«
 
 // ¡î ¡ô¡ç  ¡ï¡ô
-
+#define TANK_SHAPE1   1//"¡ô"
+#define TANK_SHAPE2   2 //"¡ñ"
+#define TANK_SHAPE3   3 // "¡ò"
+#define TANK_SHAPE4    4 //"¡ó"
+#define TANK_SHAPE5    5  //"¡ö"
 //ÐÇ½Úµã
 
 typedef struct _STARNODE {
