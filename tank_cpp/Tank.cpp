@@ -101,7 +101,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	bool bToHeart = false;
 	bool bToPlayer01 = false;
 	bool bToPlayer02 = false;
-	CAstar Astar;
+	static CAstar Astar;
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
 		if (m_vecTank[index]->isNPC && m_vecTank[index]->isAlive) {
 			
@@ -126,13 +126,19 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 			
 			int nDir = -1;
 			//测试
-			targetPos = player01;
-			if (Astar.searchPath(*m_pMaps, start, targetPos)) {
-				nDir = Astar.getMoveDir(start);
+			if (true) { // true--自动寻路
+				targetPos = player01;
+				if (Astar.searchPath(*m_pMaps, start, targetPos)) {
+					nDir = Astar.getMoveDir(start);
+				}
+				if (nDir == -1) {
+					continue;
+				}
 			}
-			if (nDir == -1) {
-				continue;
+			if(nDir == -1){
+				nDir = rand() % 4;
 			}
+			
 			
 			moveTank(nDir, index); //移动
 			bullets.shootBullet(m_vecTank, index); //射击
@@ -158,7 +164,7 @@ void CTank::initPlayerTank(int Count)
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
-		pTank->nlife = 30;
+		pTank->nlife = 30;  //------------------------------------test
 		pTank->nlevel = 1;
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;

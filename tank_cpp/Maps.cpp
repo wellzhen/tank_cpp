@@ -94,11 +94,11 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 14, "≈ 河流", COLOR_GRAY);   //河流
 
 
-	printChar(nDestPosX, 28, "【选择导入已有关卡地图：】", COLOR_GRAY);
+	printChar(nDestPosX, 28, "【导入已有关卡图】", COLOR_GRAY);
 	printChar(nDestPosX + 3, 29, "←", COLOR_GRAY); printChar(nDestPosX + 4, 29, "  ", COLOR_GRAY); printChar(nDestPosX + 5, 29, "→", COLOR_GRAY);
 
-	printChar(nDestPosX, 30, "【保存关卡地图:自动编号】", COLOR_GRAY);
-	printChar(nDestPosX , 31, "【强制保存为所选关卡：】", COLOR_GRAY);
+	printChar(nDestPosX, 30, "【保存为缺失关卡】", COLOR_GRAY);
+	printChar(nDestPosX , 31, "【保存:指定关卡号】", COLOR_GRAY);
 	printChar(nDestPosX+3, 32, "←", COLOR_GRAY); printChar(nDestPosX + 4, 32, "  ", COLOR_GRAY); printChar(nDestPosX + 5, 32, "→", COLOR_GRAY);
 	
 

@@ -40,7 +40,7 @@ void CCtrl::playTank(int gameType)
 		//初始化玩家坦克,并显示:
 		tanks.initPlayerTank(playerCount);
 		//初始化NPC坦克， 并显示
-		tanks.initNpcTank(4);
+		tanks.initNpcTank(3);
 	}
 	else if (gameType == 2) {//编辑地图： 坦克是占位用的
 		maps.showNeedStaticObj();
@@ -235,7 +235,7 @@ int CCtrl::getPlayerCount()
 
 void CCtrl::initConsoleWindow()
 {
-	system("mode con cols=150 lines=50");
+	system("mode con cols=145 lines=42");
 }
 
 void CCtrl::initInputShift()

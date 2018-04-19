@@ -14,6 +14,7 @@ private:
 	void __addToOpenTable(STARNODE * pNode);
 	void __updateInvalidPoint(CMaps& maps, POS startPoint);
 
+	void Clear();
 private:
 	vector<STARNODE*> m_vecOpen;
 	vector<STARNODE*> m_vecClose;

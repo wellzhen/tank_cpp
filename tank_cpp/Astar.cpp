@@ -1,7 +1,5 @@
 #include "Astar.h"
 
-
-
 CAstar::CAstar()
 {
 	m_bOpenMap[MAPHEIGHT][MAPWIDTH] = { false };
@@ -12,23 +10,27 @@ CAstar::CAstar()
 
 CAstar::~CAstar()
 {
+	Clear();
+}
+void CAstar::Clear()
+{
 	for (unsigned int i = 0; i < m_vecClose.size(); i++) {
 		if (m_vecClose[i]) {
 			delete[] m_vecClose[i];
 			m_vecClose[i] = NULL;
 		}
 	}
-	m_vecClose.clear();
+	//m_vecClose.clear();
 	m_vecClose.swap(vector<STARNODE*>());
-	
+
 	for (unsigned int i = 0; i < m_vecOpen.size(); i++) {
 		if (m_vecOpen[i]) {
 			delete[] m_vecOpen[i];
 			m_vecOpen[i] = NULL;
 		}
 	}
-	m_vecClose.clear();
-	m_vecClose.swap(vector<STARNODE*>());
+	//m_vecOpen.clear();
+	m_vecOpen.swap(vector<STARNODE*>());
 }
 
 int  CAstar::getMoveDir(POS startPos)
@@ -40,6 +42,8 @@ int  CAstar::getMoveDir(POS startPos)
 	int nFromY;
 	bool hasFind = false;
 	STARNODE* pNode = m_vecClose[m_vecClose.size() - 1];
+	int nMaxLoopTimes = m_vecClose.size() + 1;
+	int nCurrentLoop = 0; //防止死循环
 	while (!hasFind) {
 		nToX = pNode->nPosX;
 		nToY = pNode->nPosY;
@@ -51,6 +55,11 @@ int  CAstar::getMoveDir(POS startPos)
 
 		if (pNode->nFromX == 0 && pNode->nFromY == 0 &&pNode->nG == 0) {//找到了开始点
 			hasFind = true;
+		}
+		nCurrentLoop++;
+		if (nCurrentLoop > nMaxLoopTimes) {
+			//printf("error_Astar\n");
+			return 0;
 		}
 	}
 	//找到了第一步要移动的位置（nToX, nToY）
@@ -154,6 +163,7 @@ bool  CAstar::searchPath(CMaps& maps, POS startPoint, POS endPoint)
 			}
 			//是否在Open表 或close表中
 			if (m_bOpenMap[y][x] || m_pCloseMap[y][x] != NULL) {
+				delete pNearNode[i];
 				continue;
 			}
 			//合格了，添加到open表中
@@ -191,8 +201,9 @@ void CAstar::__addToOpenTable(STARNODE * pNewNode)
 
 void CAstar::__initData(CMaps& maps, POS startPoint)
 {
-	m_vecClose.clear();
-	m_vecOpen.clear();
+	//m_vecClose.clear();
+	//m_vecOpen.clear();
+	Clear();
 	//初始化
 	for (int row = 0; row < MAPHEIGHT; row++) {
 		for (int col = 0; col < MAPWIDTH; col++) {
