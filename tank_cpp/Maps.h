@@ -19,7 +19,7 @@ public:
 	//恢复受损的植物
 	void recoverDamagedPlant();
 	//读取通过地图文件
-	void CMaps::readStaticMapFile(int fileNum);
+	void readStaticMapFile(int fileNum);
 	//画静态物体点： 依据m_nMap
 	void reDrawMapPoint(int row, int col);
 	//打印一个字符  

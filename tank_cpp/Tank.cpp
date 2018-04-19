@@ -52,11 +52,11 @@ void CTank::initNpcTank(int Count)
 	for (int nNum = 0; nNum < Count; nNum++) {
 		TANK*  pTank = (TANK*)malloc(sizeof(TANK));
 		pTank->isNPC = true;
-		pTank->color = COLOR_BLUE;
+		pTank->color = COLOR_YELLOW;
 		pTank->dir = DIR_DOWN;
 		pTank->maxHP = 100;
 		pTank->curHP = 100;
-		pTank->maxSpeed = 60;
+		pTank->maxSpeed = 50;
 		pTank->curSpeed = 50;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
@@ -157,10 +157,10 @@ void CTank::initPlayerTank(int Count)
 		pTank->posY = MAPHEIGHT - 3;
 		pTank->color = COLOR_RED;
 		pTank->dir = DIR_UP;
-		pTank->maxHP = 100;
+		pTank->maxHP = 100; 
 		pTank->curHP = 100;
-		pTank->maxSpeed = 60;
-		pTank->curSpeed = 50;
+		pTank->maxSpeed = 80;//不要超过80
+		pTank->curSpeed = 80;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
@@ -181,6 +181,9 @@ void CTank::initPlayerTank(int Count)
 //此函数同步m_pMaps->m_pTankMap数据
 void CTank::drawTank( int index, bool isShow)
 {
+	srand((unsigned int)time(NULL));
+	//初始化速度
+	m_vecTank[index]->curSpeed = m_vecTank[index]->maxSpeed;
 	int posX = m_vecTank[index]->posX;
 	int posY = m_vecTank[index]->posY;
 	int dirNum = m_vecTank[index]->dir;
@@ -189,7 +192,6 @@ void CTank::drawTank( int index, bool isShow)
 			if (m_tankShape[dirNum][row - posY + 1][col - posX + 1] == 1) {
 				if (m_pMaps->m_nMap[row][col] == MAP_TREE) {
 					//树林要隐藏坦克： 不显示也不擦除
-					int test = 1;
 				}
 				else if (isShow) {
 					m_pMaps->printChar(col, row, "■", m_vecTank[index]->color);
@@ -197,6 +199,13 @@ void CTank::drawTank( int index, bool isShow)
 															 //如果显示位置有植物
 					if (m_pMaps->m_nMap[row][col] == MAP_GRASS || m_pMaps->m_nMap[row][col] == MAP_ICE) {//植物被破坏
 						m_pMaps->m_vecDamagedPlant.push_back({ col, row });   //同步受损植物地图
+						
+						if (m_pMaps->m_nMap[row][col] == MAP_GRASS) {//减速
+							m_vecTank[index]->curSpeed = int(m_vecTank[index]->maxSpeed/(rand()%4 +1));
+						}
+						else {//加速
+							m_vecTank[index]->curSpeed = int(m_vecTank[index]->maxSpeed + m_vecTank[index]->maxSpeed/(rand()%4+1));
+						}
 					}
 					else if (m_pMaps->m_nMap[row][col] == MAP_HEART) {//检测心脏是否被碾压
 						m_pMaps->m_isHeartBroken = true;
@@ -240,7 +249,7 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 		//速度设置：只有前进限制速度
 		clock_t start_time = m_vecTank[index]->last_move_time;
 		clock_t end_time = clock();
-		if (end_time - start_time < 150) {
+		if (end_time - start_time < (160- m_vecTank[index]->curSpeed)*5) {
 			return false;
 		}
 		m_vecTank[index]->last_move_time = end_time;
@@ -418,3 +427,86 @@ int  CTank::judgeAlive()
 		return 0;  
 	}
 }
+
+
+void CTank::showTankInfo()
+{
+	stringstream stream;
+	for (int index = 0; index < m_vecTank.size(); index++) {
+		
+		int posX = MAPWIDTH + 1;
+		int posY = 2 + 4 * index;
+		int dirNum = 0;
+		//画坦克
+		for (int row = posY - 1; row <= posY + 1; row++) {
+			for (int col = posX - 1; col <= posX + 1; col++) {
+				if (m_tankShape[dirNum][row - posY + 1][col - posX + 1] == 1) {
+					if (!m_vecTank[index]->isAlive){ //死亡
+							m_pMaps->printChar(col, row, "■", COLOR_GRAY);
+					}
+					else {
+						m_pMaps->printChar(col, row, "■", m_vecTank[index]->color);
+					}
+				}
+			}
+		}
+		
+		//显示坦克生命值
+		stream.clear();
+		stream << m_vecTank[index]->curHP;
+		string strHp = stream.str();
+		strHp.append(" ");
+		for (int i = 0; i < (int)(m_vecTank[index]->curHP/20); i++) {
+			strHp.append("■");
+		}
+		if (m_vecTank[index]->isAlive) {
+			CMaps::printChar(posX + 1, posY - 1, "--------------", COLOR_GREEN);
+			CMaps::printChar(posX + 1, posY - 1, (char *)strHp.c_str(), COLOR_GREEN);
+		}
+		else {
+			CMaps::printChar(posX + 1, posY - 1, "              ", COLOR_GRAY);
+		}
+		
+
+
+		//显示坦克生命数量
+		stream.clear();
+		stream.str(""); //防止内存累积
+		int nLife = m_vecTank[index]->nlife;
+		stream << nLife;
+		string  strLife= stream.str();
+		strLife.insert(0, " x ");
+		if (m_vecTank[index]->isAlive) {
+			CMaps::printChar(posX + 2, posY, "      ", m_vecTank[index]->color);
+			CMaps::printChar(posX + 2, posY, (char *)strLife.c_str(), m_vecTank[index]->color);
+		}
+		else {
+			CMaps::printChar(posX + 2, posY, "      ", COLOR_GRAY);
+		}    
+
+		
+
+
+		//显示速度
+		stream.clear();
+		stream.str(""); //防止内存累积
+		int nSpeed = m_vecTank[index]->curSpeed;
+		stream << nSpeed;
+		string  strSpeed= stream.str();
+		strSpeed.insert(0, "  ");
+		strSpeed.append(" Km/h");
+		if (m_vecTank[index]->isAlive) {
+			CMaps::printChar(posX + 2, posY + 1, "------", m_vecTank[index]->color);
+			CMaps::printChar(posX + 2, posY + 1, (char *)strSpeed.c_str(), COLOR_WHITE);
+		}
+		else {
+			CMaps::printChar(posX + 2, posY + 1, "          ", COLOR_GRAY);
+		}
+
+		
+
+		stream.str(""); //防止内存累积
+	}
+}
+
+

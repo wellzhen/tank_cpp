@@ -121,6 +121,9 @@ void CCtrl::playTank(int gameType)
 		}
 		//判断坦克生存情况
 		int tankResult = tanks.judgeAlive();
+		//显示战斗信息
+		showGameInfo(tanks, bullets);
+
 		if (tankResult == -1) { //失败
 			Sleep(2000);
 			return;
@@ -414,5 +417,6 @@ void CCtrl::clearGlobalData(CMaps& maps, CTank& tanks, CBullet& bullets)
 
 void CCtrl::showGameInfo(CTank& tanks, CBullet& bullets)
 {
+	tanks.showTankInfo();
 
 }

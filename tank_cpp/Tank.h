@@ -22,9 +22,10 @@ public:
 	void initDrawAllTank(bool isShow);
 	//移动坦克, 包含显示和隐藏
 	bool moveTank(int nDir, int index);
-
 	//判断血值和存活： 所有的坦克
 	int judgeAlive();
+	//显示坦克的游戏信息
+	void showTankInfo();
 private:
 	void __initTankShapeModel();
 public:
