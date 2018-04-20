@@ -20,129 +20,192 @@ void CCtrl::playTank(int gameType)
 		printf("debug: 玩家数量错误---\n");
 		Sleep(5000);
 	}
-	//开始布置游戏数据
-	system("cls");
-	CMaps maps;
-	CTank tanks(&maps);
-	CBullet bullets(&maps);
-	//清理全局数据（push_back的数据）-- need ?
-	//clearGlobalData(maps, tanks, bullets);
-	if (gameType == 1) { //通关游戏
-		//maps.initStaticMapData(); //改为读取关卡文件
-		int nChoosedMapFile = chooseLevelPassMenu(maps);//显示关卡菜单并选择
-		if (nChoosedMapFile == 0) { //返回主菜单
-			return;
-		}
-		else {//读取地图文件，获取地图信息
-			maps.readStaticMapFile(nChoosedMapFile);
-		}
-		maps.drawMap();
-		//初始化玩家坦克,并显示:
-		tanks.initPlayerTank(playerCount);
-		//初始化NPC坦克， 并显示
-		tanks.initNpcTank(3);
-	}
-	else if (gameType == 2) {//编辑地图： 坦克是占位用的
-		maps.showNeedStaticObj();
-		maps.initOuterWall();
-		maps.initHeart();
-		maps.drawMap();
-		//初始化玩家坦克
-		tanks.initPlayerTank(2);
-		//初始化NPC坦克
-		tanks.initNpcTank(18);
-		//显示坦克
-		tanks.initDrawAllTank(true);
+	
+	int nScore = 0;
+	bool autoGoNextLevel = false; 
+	int nCurrentLevel = 0;
+	int nNpcCount = 1;
+	while(1){
 
-		maps.customMapData();
-
-		return; //change：直接返回界面
+		//开始布置游戏数据
+		system("cls");
+		CMaps maps;
+		CTank tanks(&maps);
+		CBullet bullets(&maps);
+		if (tanks.m_nScore == 0) {
+			tanks.m_nScore = nScore;
+		}
 		
-	}
-	else if (gameType == 3) {//读档
-		readArchive(maps, tanks, bullets);
-		maps.drawMap();
-		//重新画一遍玩家坦克： 会自动更新g_pTankMap
-		for (unsigned int i = 0; i < tanks.m_vecTank.size(); i++) {
-			if ((!tanks.m_vecTank[i]->isNPC) && tanks.m_vecTank[i]->isAlive) {
-				tanks.drawTank(i, true);
-			}
-		}
-	}
+		//清理全局数据（push_back的数据）-- need ?
+		//clearGlobalData(maps, tanks, bullets);
 
-	/*********************操作坦克*******************/
-	char chKey;
-	int  nDirNum;
-	bool hasPause = false;
-	while (1) {
-		if (_kbhit()) {
-			chKey = _getch();
-			if (chKey == 27) {//ESC键
-				saveArchive(maps, tanks, bullets);
+		if (autoGoNextLevel && nCurrentLevel) {//自动进入下一关
+			maps.readStaticMapFile(nCurrentLevel);//读取地图
+			maps.drawMap();
+			//初始化玩家坦克,并显示:
+			tanks.initPlayerTank(playerCount, nCurrentLevel);
+			//初始化NPC坦克， 并显示
+			tanks.initNpcTank(nNpcCount, nCurrentLevel);
+		}
+		else if (gameType == 1) { //通关游戏
+			
+			int nChoosedMapFile = chooseLevelPassMenu(maps);//显示关卡菜单并选择
+			if (nChoosedMapFile == 0) { //返回主菜单
 				return;
 			}
-			else if (chKey == 32) { //空格
-				hasPause = !hasPause; //取反
-				continue;
+			else {//读取地图文件，获取地图信息
+				maps.readStaticMapFile(nChoosedMapFile);
+				nCurrentLevel = nChoosedMapFile;
+			}
+			maps.drawMap();
+			//初始化玩家坦克,并显示:
+			tanks.initPlayerTank(playerCount);
+			//初始化NPC坦克， 并显示
+			tanks.initNpcTank(nNpcCount);
+		}
+		else if (gameType == 2) {//编辑地图： 坦克是占位用的
+			maps.showNeedStaticObj();
+			maps.initOuterWall();
+			maps.initHeart();
+			maps.drawMap();
+			//初始化玩家坦克
+			tanks.initPlayerTank(2);
+			//初始化NPC坦克
+			tanks.initNpcTank(18);
+			//显示坦克
+			tanks.initDrawAllTank(true);
+
+			maps.customMapData();
+
+			return; //change：直接返回界面
+
+		}
+		else if (gameType == 3) {//读档
+			readArchive(maps, tanks, bullets);
+			nScore = tanks.m_nScore;
+			nCurrentLevel = tanks.m_nLevel;
+			maps.drawMap();
+			//重新画一遍玩家坦克： 会自动更新g_pTankMap
+			for (unsigned int i = 0; i < tanks.m_vecTank.size(); i++) {
+				if ((!tanks.m_vecTank[i]->isNPC) && tanks.m_vecTank[i]->isAlive) {
+					tanks.drawTank(i, true);
+				}
+				if (!tanks.m_vecTank[i]->isNPC) {
+					playerCount++; //恢复玩家数量，下一关卡要用
+				}
+			}
+		}
+
+		/*********************操作坦克*******************/
+		char chKey;
+		int  nDirNum;
+		bool hasPause = false;
+		while (1) {
+			if (_kbhit()) {
+				chKey = _getch();
+				if (chKey == 27) {//ESC键
+					saveArchive(maps, tanks, bullets);
+					return;
+				}
+				else if (chKey == 32) { //空格
+					hasPause = !hasPause; //取反
+					continue;
+				}
+				else if (hasPause) {
+					continue;
+				}
+				else if (chKey == 'f') {//发射炮弹
+					bullets.shootBullet(tanks.m_vecTank, 0);//index = 0
+				}
+				else if (chKey == 'h' && playerCount == 2) {//第二玩家
+					bullets.shootBullet(tanks.m_vecTank, 1);
+				}
+				else if (chKey == 'w' || chKey == 'a' || chKey == 's' || chKey == 'd') { //移动按键
+					nDirNum = dirKey2DirNum(chKey);
+					tanks.moveTank(nDirNum, 0);//暂时第一辆坦克
+				}
+				else if (playerCount == 2 && (chKey == 'j' || chKey == 'k' || chKey == 'i' || chKey == 'l')) { //移动按键
+					nDirNum = dirKey2DirNum(chKey);
+					tanks.moveTank(nDirNum, 1);//暂时第2辆坦克
+				}
+				else {
+					printf("非控制键： %c %d %d\n", chKey, chKey, (int)chKey);
+				}
 			}
 			else if (hasPause) {
 				continue;
 			}
-			else if (chKey == 'f') {//发射炮弹
-				bullets.shootBullet(tanks.m_vecTank, 0);//index = 0
-			}
-			else if (chKey == 'h' && playerCount == 2) {//第二玩家
-				bullets.shootBullet(tanks.m_vecTank, 1);
-			}
-			else if (chKey == 'w' || chKey == 'a' || chKey == 's' || chKey == 'd') { //移动按键
-				nDirNum = dirKey2DirNum(chKey);
-				tanks.moveTank(nDirNum, 0);//暂时第一辆坦克
-			}
-			else if (playerCount == 2 &&( chKey == 'j' || chKey == 'k' || chKey == 'i' || chKey == 'l')) { //移动按键
-				nDirNum = dirKey2DirNum(chKey);
-				tanks.moveTank(nDirNum, 1);//暂时第2辆坦克
-			}
-			else {
-				printf("非控制键： %c %d %d\n", chKey, chKey, (int)chKey);
-			}
-		}
-		else if (hasPause) {
-			continue;
-		}
 
-		//Npc坦克自动运行
-		tanks.autoRunNpcTank(bullets);
-		//子弹前进
-		bullets.runBullet();
-		//判断心脏
-		if (maps.m_isHeartBroken) { //失败: 总部被摧毁
-			maps.readStaticMapFile(1001);
-			maps.drawMap();
-			Sleep(4000);
-			return;
-		}
-		//判断坦克生存情况
-		int tankResult = tanks.judgeAlive();
-		//显示战斗信息
-		showGameInfo(tanks, bullets);
+			//Npc坦克自动运行
+			tanks.autoRunNpcTank(bullets);
+			//子弹前进
+			bullets.runBullet();
+			//判断心脏
+			if (maps.m_isHeartBroken) { //失败: 总部被摧毁
+				maps.readStaticMapFile(1001);
+				maps.drawMap();
+				Sleep(4000);
+				return;
+			}
+			//判断坦克生存情况
+			int tankResult = tanks.judgeAlive();
+			nScore = tanks.m_nScore;
+			if (nScore > 0) {
+				nScore++;
+			}
+			//显示战斗信息
+			showGameInfo(tanks, bullets);
 
-		if (tankResult == -1) { //失败
-			maps.readStaticMapFile(1002);
-			maps.drawMap();
-			Sleep(4000);
-			return;
+			if (tankResult == -1) { //失败
+				maps.readStaticMapFile(1002);
+				Sleep(4000);
+				maps.drawMap();
+				Sleep(4000);
+				return;
+			}
+			else if (tankResult == 1) { //胜利
+				maps.readStaticMapFile(1000);
+				maps.drawMap();
+				nCurrentLevel = getNextLevel(nCurrentLevel);
+				Sleep(2000);
+				autoGoNextLevel = true;
+				Sleep(2000);
+				system("cls");
+				break;
+
+			}
+			maps.recoverDamagedPlant();
+			//继续当前关卡
+			tanks.m_nLevel = nCurrentLevel; //保存分数，显示和存档用
 		}
-		else if (tankResult == 1) { //胜利
-			maps.readStaticMapFile(1000);
-			maps.drawMap();
-			Sleep(4000);
-			return;
-		}
-		maps.recoverDamagedPlant();
 	}
-
 }
 
+int CCtrl::getNextLevel(int nCurrentLevel) 
+{
+	vector<int>  vecPassLevel;//保存有的关卡
+	for (int i = 1; i < 38; i++) {
+		int nFileNum = i;
+		stringstream stream;
+		stream << nFileNum;
+		string  strFile = stream.str();
+		strFile.insert(0, "map\\"); //拼凑文件路径
+		const char * pFilename = strFile.c_str();
+		FILE * pFile;
+		errno_t errNum = fopen_s(&pFile, pFilename, "rb");
+
+		if (errNum == 0) {//文件存在
+			vecPassLevel.push_back(i);
+			fclose(pFile);
+			if (i > nCurrentLevel) {
+				return i;
+			}
+		}
+	}
+	//没有下一关了，从头开始
+	return vecPassLevel[0];
+
+}
 int CCtrl::chooseLevelPassMenu(CMaps& maps)
 {
 	vector<int>  vecPassLevel;//保存有的关卡
@@ -362,11 +425,26 @@ int CCtrl::getMenuChoice()
 
 void CCtrl::saveArchive(CMaps& maps, CTank& tanks, CBullet& bullets)
 {
+	for (int i = 0; i < tanks.m_vecTank.size(); i++) {
+		tanks.m_vecTank[i]->last_move_time = 0;
+		tanks.m_vecTank[i]->last_shoot_time = 0;
+	}
+	for (int i = 0; i < bullets.m_vecBullet.size(); i++) {
+		bullets.m_vecBullet[i]->last_fly_time = 0;
+
+	}
+
 	FILE * pFile;
 	fopen_s(&pFile, "archive.db", "wb");
 	//一、地图g_nMap数据
 	fwrite(maps.m_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, pFile);
 	//二、坦克
+	//坦克关卡
+	int nLevel = tanks.m_nLevel;
+	fwrite(&nLevel, sizeof(int), 1, pFile);
+	//坦克分数
+	int nScore = tanks.m_nScore;
+	fwrite(&nScore, sizeof(int), 1, pFile);
 	//坦克数量
 	int nTankSize = tanks.m_vecTank.size();
 	fwrite(&nTankSize, sizeof(int), 1, pFile);
@@ -400,8 +478,16 @@ void CCtrl::readArchive(CMaps& maps, CTank& tanks, CBullet& bullets)
 	fopen_s(&pFile, "archive.db", "rb");
 	//一、地图g_nMap数据
 	fread_s(maps.m_nMap, sizeof(int)*MAPWIDTH*MAPHEIGHT, sizeof(int), MAPWIDTH*MAPHEIGHT, pFile);	//fwrite(g_nMap, sizeof(int), MAPWIDTH* MAPHEIGHT, pFile);
-																								//二、坦克
-																								//坦克数量
+	//二、坦克
+	//坦克关卡
+	int nLevel;
+	fread_s(&nLevel, sizeof(int), sizeof(int), 1, pFile);		//fwrite(&nLevel, sizeof(int), 1, pFile);
+	tanks.m_nLevel = nLevel;
+	//坦克分数
+	int nScore;
+	fread_s(&nScore, sizeof(int), sizeof(int), 1, pFile);
+	tanks.m_nScore = nScore;    //fwrite(&nScore, sizeof(int), 1, pFile);
+	//坦克数量
 	int nTankSize;
 	fread_s(&nTankSize, sizeof(int), sizeof(int), 1, pFile);//fwrite(&nTankSize, sizeof(int), 1, pFile);
 															//坦克数据

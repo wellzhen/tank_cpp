@@ -46,8 +46,9 @@ void CTank::__initTankShapeModel()
 }
 
 
-void CTank::initNpcTank(int Count)
+void CTank::initNpcTank(int Count,int nLevel)
 {
+	m_nLevel = nLevel;
 	srand((unsigned int)time(NULL));
 	Count = Count > 18 ? 18 : Count;
 	for (int nNum = 0; nNum < Count; nNum++) {
@@ -55,14 +56,14 @@ void CTank::initNpcTank(int Count)
 		pTank->isNPC = true;
 		pTank->color = COLOR_YELLOW;
 		pTank->dir = DIR_DOWN;
-		pTank->maxHP = 60+ nNum * 20;
+		pTank->maxHP = 60+ nNum * 20 + nLevel;
 		pTank->curHP = pTank->maxHP;
-		pTank->maxSpeed = 50 + rand()%50;
+		pTank->maxSpeed = 120 - nNum*10 + nLevel; 
 		pTank->curSpeed = pTank->maxSpeed;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
-		pTank->nlife = 2;
+		pTank->nlife = 0;
 		pTank->nlevel = 1;
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;
@@ -97,8 +98,13 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 	player01.posY = m_vecTank[0]->posY;
 
 	POS player02;
-	player02.posX = m_vecTank[1]->posX;
-	player02.posY = m_vecTank[1]->posY;
+	bool mayHasPlayer02 = false;
+	if (m_vecTank.size() > 1) {
+		player02.posX = m_vecTank[1]->posX;
+		player02.posY = m_vecTank[1]->posY;
+		mayHasPlayer02 = true;
+	}
+	
 
 	POS targetPos;
 
@@ -120,7 +126,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 				targetPos = player01;
 				bToPlayer01 = true;
 			}
-			else if (!m_vecTank[1]->isNPC && m_vecTank[1]->isAlive) {
+			else if (mayHasPlayer02 && !m_vecTank[1]->isNPC && m_vecTank[1]->isAlive) {
 				targetPos = player02;
 				bToPlayer02 = true;
 			}
@@ -152,7 +158,7 @@ void CTank::autoRunNpcTank(CBullet& bullets)
 
 }
 
-void CTank::initPlayerTank(int Count)
+void CTank::initPlayerTank(int Count, int nLevel)
 {
 	srand((unsigned int)time(NULL));
 	for (int i = 0; i < Count; i++) {
@@ -164,14 +170,14 @@ void CTank::initPlayerTank(int Count)
 		pTank->initPosY = pTank->posY;
 		pTank->color = COLOR_RED;
 		pTank->dir = DIR_UP;
-		pTank->maxHP = 100; 
-		pTank->curHP = 100;
-		pTank->maxSpeed = 100+rand()%100;//不要超过80
+		pTank->maxHP = 100 + nLevel; 
+		pTank->curHP = pTank->maxHP;
+		pTank->maxSpeed = 130+rand()%70 + nLevel*10;//不要超过80
 		pTank->curSpeed = pTank->maxSpeed;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
 		pTank->nDie = 0;
-		pTank->nlife = 5;  //------------------------------------test
+		pTank->nlife = 50;  //------------------------------------test
 		pTank->nlevel = 1;
 		pTank->last_move_time = 0;
 		pTank->last_shoot_time = 0;
@@ -279,6 +285,8 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 		clock_t start_time = m_vecTank[index]->last_move_time;
 		clock_t end_time = clock();
 		if (end_time - start_time < (200- m_vecTank[index]->curSpeed)*4) {
+			Sleep(100);
+			//printf("(%d,%d)\n", end_time - start_time, (200 - m_vecTank[index]->curSpeed) * 4);
 			return false;
 		}
 		m_vecTank[index]->last_move_time = end_time;
@@ -402,6 +410,9 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 			return false;
 		}
 	}
+	else {
+		printf("坦克移动方向有误：tank.cpp/moveTank\n");
+	}
 	//允许移动
 	drawTank(index, false); //擦除
 							//修改属性
@@ -428,6 +439,9 @@ int  CTank::judgeAlive()
 			}
 			continue;
 		}
+		if (m_vecTank[i]->isNPC) {
+			m_nScore += m_vecTank[i]->maxHP  + m_nLevel; //计算分数
+		}
 		if (m_vecTank[i]->nlife >= 1) { //用life换血
 			m_vecTank[i]->curHP = m_vecTank[i]->maxHP;
 			m_vecTank[i]->nlife = m_vecTank[i]->nlife - 1;
@@ -439,8 +453,15 @@ int  CTank::judgeAlive()
 				playerNum++;
 			}
 			drawTank(i, false);
-			m_vecTank[i]->posX = m_vecTank[i]->initPosX;
-			m_vecTank[i]->posY = m_vecTank[i]->initPosY;
+
+			//如果出生地没有没占领，则在出生地重生
+			int initX;//出生点
+			int initY;
+			getSafedPoint(i, initX, initY);
+			m_vecTank[i]->posX = initX;
+			m_vecTank[i]->posY = initY;
+			drawTank(i, true);
+
 			continue;
 		}
 		//凉了
@@ -464,10 +485,10 @@ int  CTank::judgeAlive()
 void CTank::showTankInfo()
 {
 	stringstream stream;
+	int posX = MAPWIDTH + 1;
+	int posY;
 	for (unsigned int index = 0; index < m_vecTank.size(); index++) {
-		
-		int posX = MAPWIDTH + 1;
-		int posY = 2 + 4 * index;
+		posY = 2 + 4 * index;
 		int dirNum = 0;
 		//画坦克
 		for (int row = posY - 1; row <= posY + 1; row++) {
@@ -519,8 +540,6 @@ void CTank::showTankInfo()
 		else {
 			CMaps::printChar(posX + 1, posY - 1, "              ", COLOR_GRAY);
 		}
-		
-
 
 		//显示坦克生命数量
 		stream.clear();
@@ -536,9 +555,6 @@ void CTank::showTankInfo()
 		else {
 			CMaps::printChar(posX + 2, posY, "      ", COLOR_GRAY);
 		}    
-
-		
-
 
 		//显示速度
 		stream.clear();
@@ -556,7 +572,59 @@ void CTank::showTankInfo()
 			CMaps::printChar(posX + 2, posY + 1, "          ", COLOR_GRAY);
 		}
 
+		
 		stream.str(""); //防止内存累积
+	}
+
+
+	//显示关卡
+	stream.clear();
+	stream.str(""); //防止内存累积
+	int nLevel = m_nLevel;
+	stream << nLevel;
+	string  strLevel = stream.str();
+	strLevel.insert(0, "当前关卡：  ");
+	CMaps::printChar(posX + 2, posY + 5, "       ", COLOR_WHITE);
+	CMaps::printChar(posX + 2, posY + 5, (char *)strLevel.c_str(), COLOR_WHITE);
+	//显示分数
+	stream.clear();
+	stream.str(""); //防止内存累积
+	int nScore = m_nScore;
+	stream << nScore;
+	string  strScore = stream.str();
+	strScore.insert(0, "当前分数：  ");
+	CMaps::printChar(posX + 2, posY + 7, "       ", COLOR_WHITE);
+	CMaps::printChar(posX + 2, posY + 7, (char *)strScore.c_str(), COLOR_WHITE);
+
+	stream.str(""); //防止内存累积
+}
+
+
+void CTank::getSafedPoint(int tankIndex, int& posX, int&posY)
+{
+	posX = m_vecTank[tankIndex]->initPosX;
+	posY = m_vecTank[tankIndex]->initPosY;
+	while (!(m_pMaps->m_pTankMap[posY - 1][posX - 1] == NULL &&
+		m_pMaps->m_pTankMap[posY - 1][posX] == NULL &&
+		m_pMaps->m_pTankMap[posY - 1][posX + 1] == NULL &&
+		m_pMaps->m_pTankMap[posY][posX - 1] == NULL &&
+		m_pMaps->m_pTankMap[posY][posX] == NULL &&
+		m_pMaps->m_pTankMap[posY][posX + 1] == NULL &&
+		m_pMaps->m_pTankMap[posY + 1][posX - 1] == NULL &&
+		m_pMaps->m_pTankMap[posY + 1][posX] == NULL &&
+		m_pMaps->m_pTankMap[posY + 1][posX + 1] == NULL
+		)) {
+		if (tankIndex == 1 && !m_vecTank[1]->isNPC) {
+			posX++;
+		}
+		else {
+			posX--;
+		}
+		
+		if (posX <= 0 || posX >= MAPWIDTH - 1) {
+			printf("debug: no safety point\n");
+			return;
+		}
 	}
 }
 

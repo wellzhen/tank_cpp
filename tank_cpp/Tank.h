@@ -10,13 +10,13 @@ public:
 	~CTank();
 public:
 	//初始化Npc坦克
-	void initNpcTank(int count);
+	void initNpcTank(int count, int nLevel = 0);
 
 	//初始化玩家坦克
-	void initPlayerTank(int count);
+	void initPlayerTank(int count,int nLevel= 0 );
 	//自动运行Npc坦克
 	void autoRunNpcTank(CBullet& bullets);
-
+	
 	//显示坦克 true|| false
 	void drawTank(int index, bool isShow);
 	void initDrawAllTank(bool isShow);
@@ -26,11 +26,15 @@ public:
 	int judgeAlive();
 	//显示坦克的游戏信息
 	void showTankInfo();
+	//获取安全的出生点
+	void getSafedPoint(int tankIndex, int& posX, int&posY);
 private:
 	void __initTankShapeModel();
 public:
 	vector<TANK *>  m_vecTank;
 	int m_tankShape[4][3][3]; // TankShape[4][3][3]
 	CMaps * m_pMaps;
+	int m_nScore;
+	int m_nLevel;
 };
 

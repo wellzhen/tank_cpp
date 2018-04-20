@@ -37,6 +37,8 @@ public:
 	int getPlayerCount();
 	//显示并获取现有的关卡菜单 maps参数，只读
 	int chooseLevelPassMenu(CMaps& maps);
+	//获取下一个关卡
+	int getNextLevel(int nCurrent);
 	//存档
 	void saveArchive(CMaps& maps, CTank& tanks, CBullet& bullets);
 	//读档
