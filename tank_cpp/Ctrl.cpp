@@ -12,19 +12,23 @@ CCtrl::~CCtrl()
 
 void CCtrl::playTank(int gameType)
 {
+	CBgm::play(BGM_CLICK);//bgm
 	int playerCount = 0;
 	if (gameType != 3 && gameType!= 2) { //非读档和编辑地图
 		playerCount = getPlayerCount();//显示UI，获取玩家数量
+		if (playerCount == 2) {
+			CBgm::play(BGM_REQUEST_ASSIST);//bgm
+		}
 	}
 	if (gameType != 3 && gameType != 2&& playerCount == 0){ //debug
-		printf("debug: 玩家数量错误---\n");
+		//printf("debug: 玩家数量错误---\n");
 		Sleep(5000);
 	}
 	
 	int nScore = 0;
 	bool autoGoNextLevel = false; 
 	int nCurrentLevel = 0;
-	int nNpcCount = 1;
+	int nNpcCount = 2;
 	while(1){
 
 		//开始布置游戏数据
@@ -45,12 +49,18 @@ void CCtrl::playTank(int gameType)
 			//初始化玩家坦克,并显示:
 			tanks.initPlayerTank(playerCount, nCurrentLevel);
 			//初始化NPC坦克， 并显示
+			nNpcCount = nCurrentLevel;
+			nNpcCount = nNpcCount > 4 ? 4 : nNpcCount;
 			tanks.initNpcTank(nNpcCount, nCurrentLevel);
+			
+			CBgm::play(BGM_START_BATTLE);//bgm
+
 		}
 		else if (gameType == 1) { //通关游戏
-			
+			CBgm::play(BGM_JOIN);//bgm
 			int nChoosedMapFile = chooseLevelPassMenu(maps);//显示关卡菜单并选择
 			if (nChoosedMapFile == 0) { //返回主菜单
+				CBgm::play(BGM_LEAVE);//bgm
 				return;
 			}
 			else {//读取地图文件，获取地图信息
@@ -62,6 +72,8 @@ void CCtrl::playTank(int gameType)
 			tanks.initPlayerTank(playerCount);
 			//初始化NPC坦克， 并显示
 			tanks.initNpcTank(nNpcCount);
+			
+			CBgm::play(BGM_START_BATTLE);//bgm
 		}
 		else if (gameType == 2) {//编辑地图： 坦克是占位用的
 			maps.showNeedStaticObj();
@@ -124,17 +136,23 @@ void CCtrl::playTank(int gameType)
 					nDirNum = dirKey2DirNum(chKey);
 					tanks.moveTank(nDirNum, 0);//暂时第一辆坦克
 				}
+				else if (chKey == 'u') { 
+					tanks.helpPlayer();//强制回到出生点
+				}
 				else if (playerCount == 2 && (chKey == 'j' || chKey == 'k' || chKey == 'i' || chKey == 'l')) { //移动按键
 					nDirNum = dirKey2DirNum(chKey);
 					tanks.moveTank(nDirNum, 1);//暂时第2辆坦克
 				}
 				else {
-					printf("非控制键： %c %d %d\n", chKey, chKey, (int)chKey);
+					//printf("非控制键： %c %d %d\n", chKey, chKey, (int)chKey);
 				}
+				
 			}
 			else if (hasPause) {
 				continue;
 			}
+			//检测炮弹是否可以发射
+			bullets.canShoot(tanks.m_vecTank);
 
 			//Npc坦克自动运行
 			tanks.autoRunNpcTank(bullets);
@@ -144,6 +162,7 @@ void CCtrl::playTank(int gameType)
 			if (maps.m_isHeartBroken) { //失败: 总部被摧毁
 				maps.readStaticMapFile(1001);
 				maps.drawMap();
+				CBgm::play(BGM_DROP_FLAG);//bgm
 				Sleep(4000);
 				return;
 			}
@@ -159,6 +178,7 @@ void CCtrl::playTank(int gameType)
 			if (tankResult == -1) { //失败
 				maps.readStaticMapFile(1002);
 				Sleep(4000);
+				CBgm::play(BGM_FAIL);//bgm
 				maps.drawMap();
 				Sleep(4000);
 				return;
@@ -168,6 +188,7 @@ void CCtrl::playTank(int gameType)
 				maps.drawMap();
 				nCurrentLevel = getNextLevel(nCurrentLevel);
 				Sleep(2000);
+				CBgm::play(BGM_SUCCESS);//bgm
 				autoGoNextLevel = true;
 				Sleep(2000);
 				system("cls");
@@ -260,6 +281,7 @@ int CCtrl::chooseLevelPassMenu(CMaps& maps)
 						if (mousePosY >= startPosY && mousePosY <= startPosY + (int)vecPassLevel.size() - 1) {    //限定鼠标点击的Y方向范围
 							int vecIndex = mousePosY - startPosY;
 							//读取地图
+							CBgm::play(BGM_CLICK);//bgm
 							maps.readStaticMapFile(vecPassLevel[vecIndex]);
 							maps.drawMap();
 
@@ -365,7 +387,7 @@ int CCtrl::dirKey2DirNum(char keyWord)
 		return DIR_RIGHT;
 		break;
 	default:
-		printf("debug: 暂无功能的按键： dirkey2DirNum\n");
+		//printf("debug: 暂无功能的按键： dirkey2DirNum\n");
 		return -1;
 		break;
 	}
@@ -386,7 +408,7 @@ void  CCtrl::showWelcomeWords()
 	char title[] = "坦克大战";
 	char tip[] = "Wlecome To War Of Tank";
 	CMaps::printChar((MAPWIDTH - 2 - strlen(title)) / 2, MAPHEIGHT / 2, title, COLOR_WHITE);
-	CMaps::printChar((MAPWIDTH - 2 - strlen(tip)) / 2, MAPHEIGHT / 2 + 2, tip, COLOR_RED);
+	CMaps::printChar((MAPWIDTH - 2 - strlen(tip)) / 2 + 3, MAPHEIGHT / 2 + 2, tip, COLOR_RED);
 }
 
 void CCtrl::showMenu()
@@ -410,6 +432,7 @@ void CCtrl::showMenu()
 
 int CCtrl::getMenuChoice()
 {
+	CBgm::play(BGM_KAQSA);//bgm
 	int menuNum = 0;
 	while (menuNum != 1 && menuNum != 2 && menuNum != 3 && menuNum != 4) {
 		system("cls");

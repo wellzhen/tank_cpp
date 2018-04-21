@@ -32,6 +32,7 @@ int main()
 			ctrl.playTank(3); //¶ÁµµÓÎÏ·
 			break;
 		case 4:
+			PlaySoundA("bgm\\byebye.wav", NULL, SND_FILENAME | SND_SYNC);
 			return 0; //ÍË³ö
 		default:
 			return 0;

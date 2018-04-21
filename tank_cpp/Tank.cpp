@@ -172,7 +172,7 @@ void CTank::initPlayerTank(int Count, int nLevel)
 		pTank->dir = DIR_UP;
 		pTank->maxHP = 100 + nLevel; 
 		pTank->curHP = pTank->maxHP;
-		pTank->maxSpeed = 130+rand()%70 + nLevel*10;//不要超过80
+		pTank->maxSpeed = 170+ + nLevel*10;//不要超过80
 		pTank->curSpeed = pTank->maxSpeed;
 		pTank->oldSpeed = 0;
 		pTank->nKill = 0;
@@ -321,7 +321,7 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 			nDestPosX--;
 			break;
 		default:
-			printf("坦克前进方向参数dirNum错误（0123）： moveTank\n");
+			//printf("坦克前进方向参数dirNum错误（0123）： moveTank\n");
 			return false;
 		}
 	}
@@ -352,7 +352,7 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 			}
 			break;
 		default:
-			printf("坦克向左右方向移动参数dirNum错误（0123）： moveTank\n");
+			//printf("坦克向左右方向移动参数dirNum错误（0123）： moveTank\n");
 			return false;
 		}
 		nDestDir = nDirNum;
@@ -406,12 +406,12 @@ bool CTank::moveTank(int nDirNum, int index = 0)
 			nDestPosX++;
 			break;
 		default:
-			printf("坦克向右方向参数dirNum错误（0123）： moveTank\n");
+			//printf("坦克向右方向参数dirNum错误（0123）： moveTank\n");
 			return false;
 		}
 	}
 	else {
-		printf("坦克移动方向有误：tank.cpp/moveTank\n");
+		//printf("坦克移动方向有误：tank.cpp/moveTank\n");
 	}
 	//允许移动
 	drawTank(index, false); //擦除
@@ -448,9 +448,11 @@ int  CTank::judgeAlive()
 			m_vecTank[i]->nDie = m_vecTank[i]->nDie + 1;
 			if (m_vecTank[i]->isNPC) {
 				NpcNum++;
+				CBgm::play(BGM_KILLED_BY_PALYER);//bgm
 			}
 			else {
-				playerNum++;
+				playerNum++; //玩家死亡一次
+				CBgm::play(BGM_PLAYER_TANK_DIE);//bgm
 			}
 			drawTank(i, false);
 
@@ -530,9 +532,9 @@ void CTank::showTankInfo()
 		stream << m_vecTank[index]->curHP;
 		string strHp = stream.str();
 		strHp.append(" ");
-		for (int i = 0; i < (int)(m_vecTank[index]->curHP/20); i++) {
+		for (int i = 0; i < (int)((m_vecTank[index]->curHP * 10000/m_vecTank[index]->maxHP)*5/10000); i++) {
 			strHp.append("■");
-		}
+		} 
 		if (m_vecTank[index]->isAlive) {
 			CMaps::printChar(posX + 1, posY - 1, "--------------", COLOR_GREEN);
 			CMaps::printChar(posX + 1, posY - 1, (char *)strHp.c_str(), COLOR_GREEN);
@@ -540,6 +542,9 @@ void CTank::showTankInfo()
 		else {
 			CMaps::printChar(posX + 1, posY - 1, "              ", COLOR_GRAY);
 		}
+		
+
+		
 
 		//显示坦克生命数量
 		stream.clear();
@@ -616,6 +621,7 @@ void CTank::getSafedPoint(int tankIndex, int& posX, int&posY)
 		)) {
 		if (tankIndex == 1 && !m_vecTank[1]->isNPC) {
 			posX++;
+			m_vecTank[tankIndex]->dir = 0;
 		}
 		else {
 			posX--;
@@ -625,6 +631,14 @@ void CTank::getSafedPoint(int tankIndex, int& posX, int&posY)
 			printf("debug: no safety point\n");
 			return;
 		}
+	}
+}
+
+void CTank::helpPlayer()
+{
+	m_vecTank[0]->curHP = 0;
+	if (m_vecTank.size() > 2 && !m_vecTank[1]->isNPC) {
+		m_vecTank[1]->curHP = 0;
 	}
 }
 

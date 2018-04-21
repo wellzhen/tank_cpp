@@ -28,6 +28,8 @@ public:
 	void showTankInfo();
 	//获取安全的出生点
 	void getSafedPoint(int tankIndex, int& posX, int&posY);
+	//回到出生点
+	void helpPlayer();
 private:
 	void __initTankShapeModel();
 public:

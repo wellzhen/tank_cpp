@@ -63,6 +63,7 @@ typedef struct _TANK {
 
 	int nlevel;
 	int nShape;
+	bool ready;
 
 	clock_t last_move_time;
 	clock_t last_shoot_time;

@@ -69,8 +69,15 @@ void CBullet::removeInvalidBullet()
 		if (m_pMaps->m_pTankMap[posY][posX] != NULL) {//击中了坦克
 			BULLET* pBullet = m_vecBullet[i];
 			TANK* pTank = m_pMaps->m_pTankMap[posY][posX];
-			if (pBullet->isNPC != pTank->isNPC) { //敌人： 减血
+			if (pBullet->isNPC != pTank->isNPC) { //阵营不同： 减血
 				pTank->curHP -= pBullet->power;
+				if (pTank->isNPC && pTank->curHP > 10) {
+					CBgm::play(BGM_BULLET_HIT_NPC);//bgm
+				} else{
+					CBgm::play(BGM_BULLET_HIT_ME);//bgm
+					pTank->curSpeed -= 2;
+				}
+				
 			}
 			//子弹失效
 			m_vecBullet[i]->isValid = false;
@@ -107,13 +114,13 @@ void CBullet::removeInvalidBullet()
 		}
 		else if (posX < 0 || posX >= MAPWIDTH || posY < 0 || posY >= MAPHEIGHT) {
 			//never happen
-			printf("子弹坐标异常：（%d, %d）\n", posX, posY);
+			//printf("子弹坐标异常：（%d, %d）\n", posX, posY);
 
 		}
 		else {
-			printf(" 尚未定义的地图静态对象： removeInvalidBullet()\n");
+			//printf(" 尚未定义的地图静态对象： removeInvalidBullet()\n");
 			int map = m_pMaps->m_nMap[posY][posX];
-			printf(" x = %d y = %d  %d\n", posX, posY, map);
+			//printf(" x = %d y = %d  %d\n", posX, posY, map);
 		}
 	}
 	//crontab: 删除无效子弹
@@ -156,7 +163,7 @@ bool CBullet::runBullet()
 		clock_t start_time = m_vecBullet[i]->last_fly_time;
 		clock_t end_time = clock();
 		if (end_time - start_time < 50) {
-			continue;
+			//continue;
 		}
 		m_vecBullet[i]->last_fly_time = end_time;
 
@@ -178,7 +185,7 @@ bool CBullet::runBullet()
 			posX++;
 			break;
 		default:
-			printf("错误的子弹方向属性：drawbullet\n");
+			//printf("错误的子弹方向属性：drawbullet\n");
 			return false;
 			break;
 		}
@@ -196,7 +203,15 @@ bool CBullet::runBullet()
 	drawBullet(true);
 	return true;
 }
-
+void CBullet::canShoot(vector<TANK*>&m_vecTank)
+{
+	clock_t start_time = m_vecTank[0]->last_shoot_time;
+	clock_t end_time = clock();
+	if (m_vecTank[0]->isAlive && end_time - start_time > 2000 && m_vecTank[0]->ready == false) {
+		CBgm::play(BGM_READY);//bgm
+		m_vecTank[0]->ready = true;
+	}
+}
 
 
 void CBullet::shootBullet(vector<TANK *>& m_vecTank, int nTankIndex)
@@ -204,16 +219,21 @@ void CBullet::shootBullet(vector<TANK *>& m_vecTank, int nTankIndex)
 	//射速设置
 	clock_t start_time = m_vecTank[nTankIndex]->last_shoot_time;
 	clock_t end_time = clock();
-	if (m_vecTank[nTankIndex]->isNPC && end_time - start_time < 500) {
+	if (m_vecTank[nTankIndex]->isNPC && end_time - start_time < 4000) {
 		return;
 	}
-	else if (!m_vecTank[nTankIndex]->isNPC && end_time - start_time < 50) {
+	else if (!m_vecTank[nTankIndex]->isNPC && end_time - start_time < 2000) {
 		return;
 	}
 	else if (!m_vecTank[nTankIndex]->isAlive) {
 		return;
 	}
+
+	if (!m_vecTank[nTankIndex]->isNPC) {
+		CBgm::play(BGM_BOMB);//bgm
+	}
 	m_vecTank[nTankIndex]->last_shoot_time = end_time;
+	m_vecTank[nTankIndex]->ready = false;
 
 	int posX = m_vecTank[nTankIndex]->posX;
 	int posY = m_vecTank[nTankIndex]->posY;
@@ -232,7 +252,7 @@ void CBullet::shootBullet(vector<TANK *>& m_vecTank, int nTankIndex)
 		posX += 2;
 		break;
 	default:
-		printf("错误的子弹初始方向：shootBullet\n");
+		//printf("错误的子弹初始方向：shootBullet\n");
 		return;
 		break;
 	}

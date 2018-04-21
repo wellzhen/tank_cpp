@@ -1,4 +1,5 @@
 #include "Maps.h"
+#include "Bgm.h"
 
 CMaps::CMaps()
 {
@@ -93,7 +94,7 @@ void CMaps::showNeedStaticObj()
 	printChar(nDestPosX, 12, "↑ 树木", COLOR_GREEN_LIGHT); //树
 	printChar(nDestPosX, 14, "≈ 河流", COLOR_GRAY);   //河流
 
-
+	printChar(nDestPosX, 27, "【新建关卡图】", COLOR_GRAY);
 	printChar(nDestPosX, 28, "【导入已有关卡图】", COLOR_GRAY);
 	printChar(nDestPosX + 3, 29, "←", COLOR_GRAY); printChar(nDestPosX + 4, 29, "  ", COLOR_GRAY); printChar(nDestPosX + 5, 29, "→", COLOR_GRAY);
 
@@ -137,32 +138,54 @@ void CMaps::customMapData()
 					if (mousePosX >= nColorBoxPosX) { //点击了颜料区域
 						switch (mousePosY) {
 						case 0://返回
+							CBgm::play(BGM_CLICK);//bgm
 							return;
 						case 2:
 							nBrushColorNum = MAP_SPACE;
+							CBgm::play(BGM_STAMP);//bgm
 							break;
 						case 4:
 							nBrushColorNum = MAP_STONE;
+							CBgm::play(BGM_STONE);//bgm
 							break;
 						case 6:
 							nBrushColorNum = MAP_BRICK;
+							CBgm::play(BGM_BRICK);//bgm
 							break;
 						case 8:
 							nBrushColorNum = MAP_GRASS;
+							CBgm::play(BGM_GRASS);//bgm
 							break;
 						case 10:
 							nBrushColorNum = MAP_ICE;
+							CBgm::play(BGM_ICE);//bgm
 							break;
 						case 12:
 							nBrushColorNum = MAP_TREE;
+							CBgm::play(BGM_ICE);//bgm
 							break;
 						case 14:
 							nBrushColorNum = MAP_RIVER;
+							CBgm::play(BGM_RIVER);//bgm
+							break;
+						case 27: //新建关卡图
+							CBgm::play(BGM_CLICK);//bgm
+							for (int row = 4; row < MAPHEIGHT - 4; row++) {
+								for (int col = 1; col < MAPWIDTH - 1; col++) {
+									m_nMap[row][col] = 0;
+									reDrawMapPoint(row, col);
+								}
+							}
 							break;
 						case 28: //导入关卡
+							printChar(MAPWIDTH+2, 28, "请在下方选择关卡", COLOR_GRAY);
+							Sleep(1000);
+							printChar(MAPWIDTH+2, 28, "【导入已有关卡图】", COLOR_GRAY);
 							break;
 						case 29://选择导入的关卡号
 							{
+								CBgm::play(BGM_PAGE);//bgm
+
 								bool hasFind = false;
 								int  loopTimes = 0;
 								while(!hasFind ) {
@@ -209,9 +232,11 @@ void CMaps::customMapData()
 								if (!hasFind) {
 									printChar(MAPWIDTH + 6, 29, "NO", COLOR_GRAY);
 								}
+								
 							}
 							break;
 						case 30://保存为关卡地图: 自动编号
+							CBgm::play(BGM_DONE);//bgm
 							printChar(MAPWIDTH + 2, 30, "保存中...    ", COLOR_RED);//坐标对应菜单
 							
 							for (int i = 1; i < 10; i++) {
@@ -243,6 +268,7 @@ void CMaps::customMapData()
 							}
 							break;
 						case 31://强制保存为关卡 nLevelPass
+							CBgm::play(BGM_DONE);//bgm
 							printChar(MAPWIDTH + 2, 31, "保存中...        ", COLOR_RED);
 							//拼凑文件路径
 							{
@@ -263,6 +289,9 @@ void CMaps::customMapData()
 							printChar(MAPWIDTH + 2, 31, "【保存:指定关卡号】", COLOR_GRAY);//坐标对应菜单
 							break;
 						case 32: //调节关卡数字
+
+							CBgm::play(BGM_PAGE);//bgm
+
 							if (mousePosX == MAPWIDTH + 5) {//减小关卡数字；
 								nLevelPass--;
 								nLevelPass = nLevelPass >= 1 ? nLevelPass : 1;
@@ -292,6 +321,32 @@ void CMaps::customMapData()
 						}
 						else {
 							m_nMap[mousePosY][mousePosX] = nBrushColorNum;
+							//bgm_start
+							switch (nBrushColorNum) {
+							case MAP_SPACE:
+								CBgm::play(BGM_STAMP);//bgm
+								break;
+							case MAP_STONE:
+								CBgm::play(BGM_STONE);//bgm
+								break;
+							case  MAP_BRICK:
+								CBgm::play(BGM_BRICK);//bgm
+								break;
+							case MAP_GRASS:
+								CBgm::play(BGM_GRASS);//bgm
+								break;
+							case MAP_ICE:
+								CBgm::play(BGM_ICE);//bgm
+								break;
+							case MAP_TREE:
+								CBgm::play(BGM_ICE);//bgm
+								break;
+							case MAP_RIVER:
+								CBgm::play(BGM_RIVER);//bgm
+								break;
+							}
+
+							//bgm_end
 						}
 						reDrawMapPoint(mousePosY, mousePosX);
 					}

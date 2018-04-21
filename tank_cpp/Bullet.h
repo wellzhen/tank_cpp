@@ -1,6 +1,7 @@
 #pragma once
 #include "Data.h"
 #include "Maps.h"
+#include "Bgm.h"
 
 class CTank;
 
@@ -12,6 +13,8 @@ public:
 public:
 	//发射子弹
 	void shootBullet(vector<TANK *>& m_vecTank, int nTankIndex);
+	//测试子弹是否可以发射了
+	void canShoot(vector<TANK*>&m_vecTank);
 	//炮弹飞行 
 	bool runBullet();
 	//绘制子弹

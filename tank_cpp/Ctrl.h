@@ -4,6 +4,7 @@
 #include "Maps.h"
 #include "Tank.h"
 #include "Bullet.h"
+#include "Bgm.h"
 
 class CCtrl
 {
